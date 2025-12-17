@@ -1,0 +1,302 @@
+{% extends "admin/base.html" %}
+
+{% block title %}SEO Analysis - {{ post.title }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2>{{ post.title }}</h2>
+            <p style="color: #6b7280; margin: 0.5rem 0 0 0;">
+                <a href="{{ url_for('post_detail', slug=post.slug) }}" target="_blank" style="color: #2563eb;">View Post →</a>
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('admin_seo_edit_post', post_id=post.id) }}" class="btn btn-primary">Edit Post</a>
+            <button onclick="showAIRegenerate()" class="btn" style="background: #10b981; color: white; border: none;">🤖 AI Regenerate</button>
+            <a href="{{ url_for('admin_seo_posts') }}" class="btn btn-secondary">Back to Posts</a>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Main Content -->
+    <div>
+        <!-- SEO Score Card -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem; opacity: 0.9;">Overall SEO Score</h3>
+            <div style="font-size: 4rem; font-weight: 700; margin: 0;">
+                {% if seo_score is not none %}
+                    {{ seo_score }}/100
+                {% elif seo_data and seo_data.seo_score %}
+                    {{ seo_data.seo_score }}/100
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            {% if not seo_data %}
+            <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">
+                ⚠️ No SEO data found. Create SEO metadata to improve this score.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- SEO Metrics -->
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">📊 SEO Metrics</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <div>
+                    <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.25rem;">Word Count</div>
+                    <div style="font-size: 1.5rem; font-weight: 600;">{{ word_count }}</div>
+                </div>
+                <div>
+                    <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.25rem;">Reading Time</div>
+                    <div style="font-size: 1.5rem; font-weight: 600;">{{ reading_time }} min</div>
+                </div>
+                {% if seo_data %}
+                <div>
+                    <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.25rem;">Keyword Density</div>
+                    <div style="font-size: 1.5rem; font-weight: 600;">{{ seo_data.keyword_density }}%</div>
+                </div>
+                <div>
+                    <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.25rem;">Primary Keyword</div>
+                    <div style="font-size: 1.5rem; font-weight: 600;">{{ seo_data.primary_keyword or 'N/A' }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Headings Structure -->
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">📑 Content Structure</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>Headings Found ({{ headings|length }}):</strong>
+            </div>
+            
+            {% if headings %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for heading in headings %}
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6;">
+                    <span style="background: #e5e7eb; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; margin-right: 0.5rem;">
+                        {{ heading.level|upper }}
+                    </span>
+                    {{ heading.text }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: #9ca3af;">No headings found. Add H2 and H3 headings to improve SEO.</p>
+            {% endif %}
+        </div>
+
+        <!-- SEO Data -->
+        {% if seo_data %}
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">🔍 SEO Data</h3>
+            
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <strong>Meta Title:</strong>
+                    <div style="color: #6b7280; margin-top: 0.25rem;">{{ seo_data.meta_title or 'Not set' }}</div>
+                </div>
+                <div>
+                    <strong>Meta Description:</strong>
+                    <div style="color: #6b7280; margin-top: 0.25rem;">{{ seo_data.meta_description or 'Not set' }}</div>
+                </div>
+                <div>
+                    <strong>Primary Keyword:</strong>
+                    <div style="color: #6b7280; margin-top: 0.25rem;">{{ seo_data.primary_keyword or 'Not set' }}</div>
+                </div>
+                {% if seo_data.secondary_keywords %}
+                <div>
+                    <strong>Secondary Keywords:</strong>
+                    <div style="color: #6b7280; margin-top: 0.25rem;">{{ seo_data.secondary_keywords }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Suggestions -->
+        {% if suggestions %}
+        <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">💡 SEO Suggestions</h3>
+            
+            {% if suggestions.headings %}
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Suggested Headings:</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    {% for heading in suggestions.headings %}
+                    <li style="margin-bottom: 0.5rem;">{{ heading.text }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if suggestions.faqs %}
+            <div style="margin-bottom: 1.5rem;">
+                <strong>Suggested FAQs:</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    {% for faq in suggestions.faqs %}
+                    <li style="margin-bottom: 0.5rem;">
+                        <strong>Q:</strong> {{ faq.question }}<br>
+                        <strong>A:</strong> {{ faq.answer }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if suggestions.internal_links %}
+            <div>
+                <strong>Internal Link Suggestions:</strong>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    {% for link in suggestions.internal_links %}
+                    <li style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('post_detail', slug=link.post.slug) }}" target="_blank" style="color: #2563eb;">
+                            {{ link.post.title }}
+                        </a>
+                        <span style="color: #6b7280; font-size: 0.85rem;"> - {{ link.reason }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Post Info -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Post Information</h3>
+            <div style="font-size: 0.9rem;">
+                <div style="margin-bottom: 0.75rem;">
+                    <strong>Author:</strong><br>
+                    {{ post.author }}
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong>Status:</strong><br>
+                    <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem;
+                        {% if post.status == 'published' %}background: #d1fae5; color: #065f46;
+                        {% elif post.status == 'draft' %}background: #fef3c7; color: #92400e;
+                        {% else %}background: #e5e7eb; color: #374151;{% endif %}">
+                        {{ post.status|title }}
+                    </span>
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong>Published:</strong><br>
+                    {{ post.published_date.strftime('%B %d, %Y') if post.published_date else 'Not published' }}
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong>Updated:</strong><br>
+                    {{ post.updated_at.strftime('%B %d, %Y') if post.updated_at else 'Never' }}
+                </div>
+                <div>
+                    <strong>URL Slug:</strong><br>
+                    <code style="background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">{{ post.slug }}</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        {% if post.categories %}
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Categories</h3>
+            <div>
+                {% for category in post.categories %}
+                <span style="background: #eff6ff; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-right: 0.5rem; margin-bottom: 0.5rem; display: inline-block;">
+                    {{ category.name }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- AI Regenerate Modal -->
+<div id="ai-regenerate-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2>🤖 AI Regenerate Post</h2>
+            <button onclick="closeAIRegenerate()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <p style="color: #6b7280; margin-bottom: 1rem;">This will regenerate the content for "{{ post.title }}" using AI. You'll be redirected to the edit page with the new content.</p>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
+            <select id="ai-regenerate-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+        </div>
+        
+        <div id="ai-regenerate-status" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="regenerateAIPost()" class="btn btn-primary" style="flex: 1;">Regenerate</button>
+            <button onclick="closeAIRegenerate()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAIRegenerate() {
+    document.getElementById('ai-regenerate-modal').style.display = 'flex';
+}
+
+function closeAIRegenerate() {
+    document.getElementById('ai-regenerate-modal').style.display = 'none';
+    document.getElementById('ai-regenerate-status').style.display = 'none';
+}
+
+async function regenerateAIPost() {
+    const provider = document.getElementById('ai-regenerate-provider').value;
+    const statusDiv = document.getElementById('ai-regenerate-status');
+    const postId = {{ post.id }};
+    
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#dbeafe';
+    statusDiv.style.color = '#1e40af';
+    statusDiv.textContent = '🤖 Regenerating AI content... This may take 30-60 seconds...';
+    
+    try {
+        const response = await fetch('/admin/seo/api/regenerate-post', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_id: postId, provider})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            statusDiv.style.background = '#d1fae5';
+            statusDiv.style.color = '#065f46';
+            statusDiv.textContent = '✅ Content regenerated! Redirecting to edit page...';
+            
+            // Redirect to edit page with AI data
+            setTimeout(() => {
+                const aiData = encodeURIComponent(JSON.stringify(data.data));
+                window.location.href = '{{ url_for("admin_seo_edit_post", post_id=post.id) }}?ai_data=' + aiData;
+            }, 1000);
+        } else {
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.color = '#991b1b';
+            statusDiv.textContent = '❌ ' + (data.message || 'Failed to regenerate content');
+        }
+    } catch (error) {
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        statusDiv.textContent = '❌ Error: ' + error.message;
+    }
+}
+</script>
+{% endblock %}
+

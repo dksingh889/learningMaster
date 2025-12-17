@@ -1,0 +1,953 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit SEO-Optimized Post - Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Edit SEO-Optimized Blog Post</h2>
+        <div>
+            <button type="button" onclick="previewPost()" class="btn btn-secondary" style="margin-right: 0.5rem;">Preview</button>
+            <button type="button" onclick="showAIRegenerate()" class="btn" style="background: #10b981; color: white; border: none; margin-right: 0.5rem;">🤖 AI Regenerate</button>
+            <a href="{{ url_for('admin_seo_posts') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+
+    {% if errors %}
+    <div class="flash-messages" style="margin-bottom: 1.5rem;">
+        {% for error in errors %}
+        <div class="flash-message flash-error">{{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if warnings %}
+    <div class="flash-messages" style="margin-bottom: 1.5rem;">
+        {% for warning in warnings %}
+        <div class="flash-message" style="background: #fef3c7; color: #92400e; border: 1px solid #fbbf24;">⚠️ {{ warning }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" id="post-form" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Main Content Column -->
+        <div>
+            <!-- Content Section -->
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">📝 Content</h3>
+                
+                <div class="form-group">
+                    <label for="title">Blog Title (H1) *</label>
+                    <input type="text" id="title" name="title" value="{{ form_data.title if form_data else '' }}" required 
+                           oninput="updateSlug(); updateSuggestions();" 
+                           maxlength="500">
+                    <small style="color: #6b7280; font-size: 0.85rem;" id="title-length">0/60 characters (recommended: 30-60)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="slug">URL Slug *</label>
+                    <input type="text" id="slug" name="slug" value="{{ form_data.slug if form_data else '' }}" required 
+                           maxlength="100" pattern="[a-z0-9-]+" 
+                           title="Only lowercase letters, numbers, and hyphens">
+                    <small style="color: #6b7280; font-size: 0.85rem;">SEO-friendly URL (auto-generated from title)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="excerpt">Short Excerpt / Summary</label>
+                    <textarea id="excerpt" name="excerpt" rows="3" maxlength="300">{{ form_data.excerpt if form_data else '' }}</textarea>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Brief description (150-200 chars recommended)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">Main Content * (HTML supported)</label>
+                    <textarea id="content" name="content" rows="15" required oninput="updateSuggestions();">{{ form_data.content if form_data else '' }}</textarea>
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                        <small style="color: #6b7280; font-size: 0.85rem;">
+                            Word count: <span id="word-count">0</span> | 
+                            Reading time: <span id="reading-time">0 min</span>
+                        </small>
+                        <button type="button" onclick="insertHeading()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Insert H2</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="featured_image">Featured Image URL</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="featured_image" name="featured_image" value="{{ form_data.featured_image if form_data else '' }}" 
+                               placeholder="https://example.com/image.jpg">
+                        <button type="button" onclick="uploadImage('featured_image')" class="btn btn-secondary">Upload</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Recommended: 1200x630px for best SEO</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Categories</label>
+                    <div class="checkbox-group">
+                        {% for category in categories %}
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat_{{ category.id }}" name="categories" value="{{ category.name }}"
+                                   {% if post_categories and category in post_categories %}checked{% endif %}>
+                            <label for="cat_{{ category.id }}" style="margin: 0; font-weight: normal;">{{ category.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <input type="text" name="categories" placeholder="Or enter new categories (comma-separated)" style="margin-top: 0.5rem;">
+                </div>
+                
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="author">Author</label>
+                        <input type="text" id="author" name="author" value="{{ form_data.author if form_data else 'Admin' }}">
+                    </div>
+                    <div>
+                        <label for="published_date">Published Date</label>
+                        <input type="date" id="published_date" name="published_date" value="{{ form_data.published_date if form_data else today_date }}">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="draft" {% if form_data and form_data.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="published" {% if not form_data or form_data.status == 'published' %}selected{% endif %}>Published</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SEO Section -->
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">
+                    <h3 style="margin: 0;">🔍 SEO Optimization</h3>
+                    <button type="button" onclick="generateAllSEO()" class="btn" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; font-size: 0.9rem;">✨ Generate All SEO</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="primary_keyword">Primary Keyword *</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="primary_keyword" name="primary_keyword" 
+                               value="{{ seo_data.primary_keyword|default('') }}" required
+                               oninput="updateSuggestions();" placeholder="e.g., python tutorial" style="flex: 1;">
+                        <button type="button" onclick="autoGenerateKeyword()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Main keyword for this post</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="secondary_keywords">Secondary Keywords</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="secondary_keywords" name="secondary_keywords" 
+                               value="{{ seo_data.secondary_keywords|default('') }}"
+                               placeholder="keyword1, keyword2, keyword3" style="flex: 1;">
+                        <button type="button" onclick="autoGenerateSecondaryKeywords()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Comma-separated related keywords</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="meta_title">Meta Title (SEO Title) *</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="meta_title" name="meta_title" 
+                               value="{{ seo_data.meta_title|default('') }}" required
+                               maxlength="60" oninput="updateMetaLength('meta_title', 60);" style="flex: 1;">
+                        <button type="button" onclick="autoGenerateMetaTitle()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;" id="meta_title_length">0/60 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="meta_description">Meta Description *</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <textarea id="meta_description" name="meta_description" rows="3" required
+                                  maxlength="155" oninput="updateMetaLength('meta_description', 155);" style="flex: 1;">{{ seo_data.meta_description|default('') }}</textarea>
+                        <button type="button" onclick="autoGenerateMetaDescription()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap; align-self: flex-start;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;" id="meta_description_length">0/155 characters</small>
+                </div>
+                
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                    <strong style="display: block; margin-bottom: 0.5rem;">SEO Metrics:</strong>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; font-size: 0.9rem;">
+                        <div>
+                            <span style="color: #6b7280;">Keyword Density:</span>
+                            <strong id="keyword-density">0%</strong>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">SEO Score:</span>
+                            <strong id="seo-score">0/100</strong>
+                        </div>
+                        <div>
+                            <span style="color: #6b7280;">Headings:</span>
+                            <strong id="headings-count">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Graph Section -->
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">
+                    <h3 style="margin: 0;">📱 Social Sharing (Open Graph)</h3>
+                    <button type="button" onclick="autoGenerateOGTags()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">✨ Auto-generate</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="og_title">OG Title</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="og_title" name="og_title" 
+                               value="{{ seo_data.og_title|default('') }}"
+                               placeholder="Defaults to Meta Title" style="flex: 1;">
+                        <button type="button" onclick="autoGenerateOGTitle()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Facebook, LinkedIn sharing title</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="og_description">OG Description</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <textarea id="og_description" name="og_description" rows="2"
+                                  placeholder="Defaults to Meta Description" style="flex: 1;">{{ seo_data.og_description|default('') }}</textarea>
+                        <button type="button" onclick="autoGenerateOGDescription()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap; align-self: flex-start;">Auto-generate</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Facebook, LinkedIn sharing description</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="og_image">OG Image URL</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="og_image" name="og_image" 
+                               value="{{ seo_data.og_image|default('') }}"
+                               placeholder="Defaults to Featured Image">
+                        <button type="button" onclick="uploadImage('og_image')" class="btn btn-secondary">Upload</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Recommended: 1200x630px</small>
+                </div>
+            </div>
+
+            <!-- Twitter Card Section -->
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">
+                    <h3 style="margin: 0;">🐦 Twitter Card</h3>
+                    <button type="button" onclick="autoGenerateTwitterTags()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">✨ Auto-generate</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="twitter_title">Twitter Title</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="twitter_title" name="twitter_title" 
+                               value="{{ seo_data.twitter_title|default('') }}"
+                               placeholder="Defaults to Meta Title" style="flex: 1;">
+                        <button type="button" onclick="autoGenerateTwitterTitle()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap;">Auto-generate</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="twitter_description">Twitter Description</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <textarea id="twitter_description" name="twitter_description" rows="2"
+                                  placeholder="Defaults to Meta Description" style="flex: 1;">{{ seo_data.twitter_description|default('') }}</textarea>
+                        <button type="button" onclick="autoGenerateTwitterDescription()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap; align-self: flex-start;">Auto-generate</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="twitter_image">Twitter Image URL</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="twitter_image" name="twitter_image" 
+                               value="{{ seo_data.twitter_image|default('') }}"
+                               placeholder="Defaults to Featured Image">
+                        <button type="button" onclick="uploadImage('twitter_image')" class="btn btn-secondary">Upload</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Recommended: 1200x675px</small>
+                </div>
+            </div>
+
+            <!-- Advanced SEO -->
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">⚙️ Advanced SEO</h3>
+                
+                <div class="form-group">
+                    <label for="canonical_url">Canonical URL</label>
+                    <input type="text" id="canonical_url" name="canonical_url" 
+                           value="{{ seo_data.canonical_url|default('') }}"
+                           placeholder="Auto-generated from slug">
+                    <small style="color: #6b7280; font-size: 0.85rem;">For duplicate content prevention</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="schema_type">Schema Type</label>
+                    <select id="schema_type" name="schema_type">
+                        <option value="Article" {% if not seo_data or (seo_data and seo_data.schema_type == 'Article') %}selected{% endif %}>Article</option>
+                        <option value="BlogPosting" {% if seo_data and seo_data.schema_type == 'BlogPosting' %}selected{% endif %}>BlogPosting</option>
+                        <option value="NewsArticle">NewsArticle</option>
+                        <option value="TechArticle">TechArticle</option>
+                    </select>
+                    <small style="color: #6b7280; font-size: 0.85rem;">Structured data type for search engines</small>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 1rem; font-size: 1.1rem;">Update Post</button>
+                <button type="button" onclick="saveDraft()" class="btn btn-secondary">Save Draft</button>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div>
+            <!-- SEO Suggestions -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; position: sticky; top: 1rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">💡 SEO Suggestions</h3>
+                
+                <div id="suggestions-container">
+                    <p style="color: #6b7280; font-size: 0.9rem;">Start typing to get suggestions...</p>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                    <button type="button" onclick="refreshSuggestions()" class="btn btn-secondary" style="width: 100%;">Refresh Suggestions</button>
+                </div>
+            </div>
+
+            <!-- SEO Checklist -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">✅ SEO Checklist</h3>
+                <div id="seo-checklist" style="font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-title" disabled> <label for="check-title" style="margin: 0;">Title 30-60 chars</label>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-meta" disabled> <label for="check-meta" style="margin: 0;">Meta description 120-155 chars</label>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-keyword" disabled> <label for="check-keyword" style="margin: 0;">Primary keyword set</label>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-content" disabled> <label for="check-content" style="margin: 0;">Content 500+ words</label>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-headings" disabled> <label for="check-headings" style="margin: 0;">3+ headings</label>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="check-image" disabled> <label for="check-image" style="margin: 0;">Featured image</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; overflow-y: auto;">
+    <div style="background: white; margin: 2rem auto; max-width: 800px; padding: 2rem; border-radius: 8px; position: relative;">
+        <button onclick="closePreview()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+        <h2 style="margin-bottom: 1rem;">Post Preview</h2>
+        <div id="preview-content"></div>
+    </div>
+</div>
+
+<script>
+// Auto-update functions
+function updateSlug() {
+    const title = document.getElementById('title').value;
+    const slug = document.getElementById('slug');
+    if (!slug.value || slug.dataset.autoGenerated !== 'false') {
+        slug.value = title.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        slug.dataset.autoGenerated = 'true';
+    }
+    updateMetaLength('slug', 100);
+}
+
+function updateMetaLength(fieldId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const lengthEl = document.getElementById(fieldId + '_length');
+    if (lengthEl) {
+        const length = field.value.length;
+        lengthEl.textContent = `${length}/${maxLength} characters`;
+        if (length > maxLength) {
+            lengthEl.style.color = '#ef4444';
+        } else if (length >= maxLength * 0.9) {
+            lengthEl.style.color = '#f59e0b';
+        } else {
+            lengthEl.style.color = '#6b7280';
+        }
+    }
+}
+
+function updateSuggestions() {
+    const title = document.getElementById('title').value;
+    const content = document.getElementById('content').value;
+    const keyword = document.getElementById('primary_keyword').value;
+    
+    if (!title && !content) return;
+    
+    fetch('/admin/seo/api/suggestions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, content, keyword})
+    })
+    .then(r => r.json())
+    .then(data => {
+        updateSEOStats(data);
+        updateSuggestionsDisplay(data);
+        updateChecklist(data);
+    });
+}
+
+function updateSEOStats(data) {
+    if (data.word_count !== undefined) {
+        document.getElementById('word-count').textContent = data.word_count;
+        document.getElementById('reading-time').textContent = data.reading_time + ' min';
+    }
+    if (data.keyword_density !== undefined) {
+        document.getElementById('keyword-density').textContent = data.keyword_density + '%';
+    }
+    if (data.headings) {
+        document.getElementById('headings-count').textContent = data.headings.length;
+    }
+}
+
+function updateSuggestionsDisplay(data) {
+    const container = document.getElementById('suggestions-container');
+    let html = '';
+    
+    if (data.headings && data.headings.length > 0) {
+        html += '<div style="margin-bottom: 1rem;"><strong>Suggested Headings:</strong><ul style="margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.85rem;">';
+        data.headings.slice(0, 3).forEach(h => {
+            html += `<li>${h.text}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    if (data.faqs && data.faqs.length > 0) {
+        html += '<div><strong>Suggested FAQs:</strong><ul style="margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.85rem;">';
+        data.faqs.slice(0, 2).forEach(f => {
+            html += `<li>${f.question}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    container.innerHTML = html || '<p style="color: #6b7280; font-size: 0.9rem;">Add content to see suggestions</p>';
+}
+
+function updateChecklist(data) {
+    const title = document.getElementById('title').value;
+    const metaDesc = document.getElementById('meta_description').value;
+    const keyword = document.getElementById('primary_keyword').value;
+    const content = document.getElementById('content').value;
+    const image = document.getElementById('featured_image').value;
+    
+    document.getElementById('check-title').checked = title.length >= 30 && title.length <= 60;
+    document.getElementById('check-meta').checked = metaDesc.length >= 120 && metaDesc.length <= 155;
+    document.getElementById('check-keyword').checked = keyword.length > 0;
+    document.getElementById('check-content').checked = (data.word_count || 0) >= 500;
+    document.getElementById('check-headings').checked = (data.headings?.length || 0) >= 3;
+    document.getElementById('check-image').checked = image.length > 0;
+}
+
+// Auto-generate all SEO fields at once
+async function generateAllSEO() {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const existingKeyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!title) {
+        alert('Please enter a title first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content, existing_keyword: existingKeyword})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            // Update all fields
+            if (data.primary_keyword) document.getElementById('primary_keyword').value = data.primary_keyword;
+            if (data.secondary_keywords) document.getElementById('secondary_keywords').value = data.secondary_keywords;
+            if (data.meta_title) {
+                document.getElementById('meta_title').value = data.meta_title;
+                updateMetaLength('meta_title', 60);
+            }
+            if (data.meta_description) {
+                document.getElementById('meta_description').value = data.meta_description;
+                updateMetaLength('meta_description', 155);
+            }
+            if (data.og_title) document.getElementById('og_title').value = data.og_title;
+            if (data.og_description) document.getElementById('og_description').value = data.og_description;
+            if (data.twitter_title) document.getElementById('twitter_title').value = data.twitter_title;
+            if (data.twitter_description) document.getElementById('twitter_description').value = data.twitter_description;
+            
+            // Update suggestions
+            updateSuggestions();
+            
+            // Show success message
+            alert('✅ All SEO fields generated successfully!');
+        } else {
+            alert('❌ Failed to generate SEO fields: ' + (result.message || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+// Individual auto-generate functions
+async function autoGenerateKeyword() {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    
+    if (!title) {
+        alert('Please enter a title first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data.primary_keyword) {
+            document.getElementById('primary_keyword').value = result.data.primary_keyword;
+            updateSuggestions();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function autoGenerateSecondaryKeywords() {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const keyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!keyword) {
+        alert('Please enter a primary keyword first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content, existing_keyword: keyword})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data.secondary_keywords) {
+            document.getElementById('secondary_keywords').value = result.data.secondary_keywords;
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function autoGenerateMetaTitle() {
+    const title = document.getElementById('title').value.trim();
+    const keyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!title) {
+        alert('Please enter a title first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, existing_keyword: keyword})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data.meta_title) {
+            document.getElementById('meta_title').value = result.data.meta_title;
+            updateMetaLength('meta_title', 60);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function autoGenerateMetaDescription() {
+    const content = document.getElementById('content').value.trim();
+    const keyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!content) {
+        alert('Please enter content first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content, existing_keyword: keyword})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data.meta_description) {
+            document.getElementById('meta_description').value = result.data.meta_description;
+            updateMetaLength('meta_description', 155);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function autoGenerateOGTags() {
+    const title = document.getElementById('title').value.trim();
+    const metaDesc = document.getElementById('meta_description').value.trim();
+    const keyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!title) {
+        alert('Please enter a title first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content: '', existing_keyword: keyword})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data) {
+            if (result.data.og_title) document.getElementById('og_title').value = result.data.og_title;
+            if (result.data.og_description) document.getElementById('og_description').value = result.data.og_description;
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function autoGenerateOGTitle() {
+    const metaTitle = document.getElementById('meta_title').value.trim();
+    const title = document.getElementById('title').value.trim();
+    document.getElementById('og_title').value = metaTitle || title;
+}
+
+function autoGenerateOGDescription() {
+    const metaDesc = document.getElementById('meta_description').value.trim();
+    document.getElementById('og_description').value = metaDesc;
+}
+
+async function autoGenerateTwitterTags() {
+    const title = document.getElementById('title').value.trim();
+    const metaDesc = document.getElementById('meta_description').value.trim();
+    const keyword = document.getElementById('primary_keyword').value.trim();
+    
+    if (!title) {
+        alert('Please enter a title first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/seo/api/auto-generate-seo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content: '', existing_keyword: keyword})
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data) {
+            if (result.data.twitter_title) document.getElementById('twitter_title').value = result.data.twitter_title;
+            if (result.data.twitter_description) document.getElementById('twitter_description').value = result.data.twitter_description;
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function autoGenerateTwitterTitle() {
+    const metaTitle = document.getElementById('meta_title').value.trim();
+    const title = document.getElementById('title').value.trim();
+    document.getElementById('twitter_title').value = metaTitle || title;
+}
+
+function autoGenerateTwitterDescription() {
+    const metaDesc = document.getElementById('meta_description').value.trim();
+    document.getElementById('twitter_description').value = metaDesc;
+}
+
+// Legacy functions for backward compatibility
+function suggestMetaTitle() {
+    autoGenerateMetaTitle();
+}
+
+function suggestMetaDescription() {
+    autoGenerateMetaDescription();
+}
+
+function insertHeading() {
+    const content = document.getElementById('content');
+    const keyword = document.getElementById('primary_keyword').value || 'Topic';
+    const heading = `<h2>${keyword} Guide</h2>\n\n`;
+    const cursorPos = content.selectionStart;
+    const textBefore = content.value.substring(0, cursorPos);
+    const textAfter = content.value.substring(cursorPos);
+    content.value = textBefore + heading + textAfter;
+    content.focus();
+    content.setSelectionRange(cursorPos + heading.length, cursorPos + heading.length);
+    updateSuggestions();
+}
+
+function uploadImage(fieldId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/admin/seo/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.url) {
+                document.getElementById(fieldId).value = data.url;
+            } else {
+                alert('Upload failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => alert('Upload error: ' + err));
+    };
+    input.click();
+}
+
+function previewPost() {
+    const form = document.getElementById('post-form');
+    const formData = new FormData(form);
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    fetch('/admin/seo/api/preview', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(data => {
+        const modal = document.getElementById('preview-modal');
+        const content = document.getElementById('preview-content');
+        content.innerHTML = `
+            <h1>${data.title || 'Preview'}</h1>
+            <div>${data.content || ''}</div>
+            <hr style="margin: 2rem 0;">
+            <h3>SEO Preview (Google Search Result):</h3>
+            <div style="border: 1px solid #e5e7eb; padding: 1rem; border-radius: 4px;">
+                <div style="color: #1a0dab; font-size: 1.2rem; margin-bottom: 0.25rem;">${data.meta_title || data.title}</div>
+                <div style="color: #006621; font-size: 0.9rem; margin-bottom: 0.5rem;">${data.url}</div>
+                <div style="color: #545454; font-size: 0.9rem;">${data.meta_description || 'No description'}</div>
+            </div>
+        `;
+        modal.style.display = 'block';
+    });
+}
+
+function closePreview() {
+    document.getElementById('preview-modal').style.display = 'none';
+}
+
+function refreshSuggestions() {
+    updateSuggestions();
+}
+
+function saveDraft() {
+    // TODO: Implement draft saving
+    alert('Draft saving coming soon!');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateMetaLength('title', 60);
+    updateMetaLength('meta_title', 60);
+    updateMetaLength('meta_description', 155);
+    updateSuggestions();
+    
+    // Allow manual slug editing
+    document.getElementById('slug').addEventListener('input', function() {
+        this.dataset.autoGenerated = 'false';
+    });
+    
+    // Check for AI data in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const aiData = urlParams.get('ai_data');
+    if (aiData) {
+        try {
+            const data = JSON.parse(decodeURIComponent(aiData));
+            fillFormWithAIData(data);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+            console.error('Error parsing AI data:', e);
+        }
+    }
+});
+
+function fillFormWithAIData(data) {
+    // Fill form fields
+    if (data.title && document.getElementById('title')) {
+        document.getElementById('title').value = data.title;
+        updateSlug();
+    }
+    if (data.meta_title && document.getElementById('meta_title')) {
+        document.getElementById('meta_title').value = data.meta_title;
+    }
+    if (data.meta_description && document.getElementById('meta_description')) {
+        document.getElementById('meta_description').value = data.meta_description;
+    }
+    if (data.primary_keyword && document.getElementById('primary_keyword')) {
+        document.getElementById('primary_keyword').value = data.primary_keyword;
+    }
+    if (data.secondary_keywords && document.getElementById('secondary_keywords')) {
+        document.getElementById('secondary_keywords').value = data.secondary_keywords;
+    }
+    if (data.content && document.getElementById('content')) {
+        document.getElementById('content').value = data.content;
+    }
+    if (data.excerpt && document.getElementById('excerpt')) {
+        document.getElementById('excerpt').value = data.excerpt;
+    }
+    if (data.og_title && document.getElementById('og_title')) {
+        document.getElementById('og_title').value = data.og_title;
+    }
+    if (data.og_description && document.getElementById('og_description')) {
+        document.getElementById('og_description').value = data.og_description;
+    }
+    
+    // Handle categories - try to match or add
+    if (data.categories && document.getElementById('categories')) {
+        const categories = data.categories.split(',').map(c => c.trim());
+        // Note: This would need more complex logic to match existing categories
+        // For now, we'll just show a message
+        console.log('Suggested categories:', categories);
+    }
+    
+    // Trigger updates
+    if (typeof updateSuggestions === 'function') updateSuggestions();
+    if (typeof updateMetaLength === 'function') {
+        updateMetaLength('title', 60);
+        updateMetaLength('meta_title', 60);
+        updateMetaLength('meta_description', 155);
+    }
+    
+    // Show success message
+    const flashDiv = document.createElement('div');
+    flashDiv.className = 'flash-message';
+    flashDiv.style.background = '#d1fae5';
+    flashDiv.style.color = '#065f46';
+    flashDiv.style.padding = '1rem';
+    flashDiv.style.borderRadius = '8px';
+    flashDiv.style.marginBottom = '1.5rem';
+    flashDiv.textContent = '✅ AI content loaded! Review and edit as needed before publishing.';
+    const form = document.getElementById('post-form');
+    if (form && form.parentNode) {
+        form.parentNode.insertBefore(flashDiv, form);
+    }
+}
+
+function showAIRegenerate() {
+    document.getElementById('ai-regenerate-modal').style.display = 'flex';
+}
+
+function closeAIRegenerate() {
+    document.getElementById('ai-regenerate-modal').style.display = 'none';
+    document.getElementById('ai-regenerate-status').style.display = 'none';
+}
+
+async function regenerateAIPost() {
+    const provider = document.getElementById('ai-regenerate-provider').value;
+    const statusDiv = document.getElementById('ai-regenerate-status');
+    const postId = {{ post.id }};
+    
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#dbeafe';
+    statusDiv.style.color = '#1e40af';
+    statusDiv.textContent = '🤖 Regenerating AI content... This may take 30-60 seconds...';
+    
+    try {
+        const response = await fetch('/admin/seo/api/regenerate-post', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_id: postId, provider})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            statusDiv.style.background = '#d1fae5';
+            statusDiv.style.color = '#065f46';
+            statusDiv.textContent = '✅ Content regenerated! Updating form...';
+            
+            // Fill the form with regenerated data
+            setTimeout(() => {
+                fillFormWithAIData(data.data);
+                closeAIRegenerate();
+            }, 1000);
+        } else {
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.color = '#991b1b';
+            statusDiv.textContent = '❌ ' + (data.message || 'Failed to regenerate content');
+        }
+    } catch (error) {
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        statusDiv.textContent = '❌ Error: ' + error.message;
+    }
+}
+</script>
+
+<!-- AI Regenerate Modal -->
+<div id="ai-regenerate-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2>🤖 AI Regenerate Post</h2>
+            <button onclick="closeAIRegenerate()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <p style="color: #6b7280; margin-bottom: 1rem;">This will regenerate the content for "{{ post.title }}" using AI. The new content will replace the existing content in the form.</p>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
+            <select id="ai-regenerate-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+        </div>
+        
+        <div id="ai-regenerate-status" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="regenerateAIPost()" class="btn btn-primary" style="flex: 1;">Regenerate</button>
+            <button onclick="closeAIRegenerate()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 1024px) {
+    form {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+

@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+
+{% block title %}All Posts - Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>All Posts</h2>
+    <a href="{{ url_for('admin_seo_new_post') }}" class="btn btn-primary">New Post</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Published</th>
+            <th>Updated</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts.items %}
+        <tr>
+            <td><a href="{{ url_for('admin_edit_post', post_id=post.id) }}" style="color: #2563eb; text-decoration: none;">{{ post.title }}</a></td>
+            <td>{{ post.author }}</td>
+            <td>{% if post.published_date %}{{ post.published_date.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+            <td>{% if post.updated_at %}{{ post.updated_at.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+            <td>
+                <a href="{{ url_for('admin_seo_post_detail', post_id=post.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; margin-right: 0.5rem;">View SEO</a>
+                <a href="{{ url_for('post_detail', slug=post.slug) }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">View</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if posts.pages > 1 %}
+<div style="margin-top: 2rem; text-align: center;">
+    {% if posts.has_prev %}
+        <a href="{{ url_for('admin_seo_posts', page=posts.prev_num) }}" class="btn btn-secondary">Previous</a>
+    {% endif %}
+    <span style="margin: 0 1rem;">Page {{ posts.page }} of {{ posts.pages }}</span>
+    {% if posts.has_next %}
+        <a href="{{ url_for('admin_seo_posts', page=posts.next_num) }}" class="btn btn-secondary">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

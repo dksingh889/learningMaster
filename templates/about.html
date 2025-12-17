@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Learning Master{% endblock %}
+{% block description %}Learn more about Learning Master - your comprehensive resource for programming and web development tutorials, tips, and guides.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "About Learning Master",
+  "description": "Learn more about Learning Master",
+  "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">About Learning Master</h1>
+        <p class="page-subtitle">Your comprehensive resource for programming and web development</p>
+    </div>
+
+    <div class="legal-content">
+        <section>
+            <h2>Welcome to Learning Master</h2>
+            <p>Learning Master is your go-to destination for comprehensive programming and web development tutorials, guides, and tips. We are dedicated to helping developers of all skill levels master the art of coding and web development.</p>
+            <p>This blog has been carefully migrated from Blogger to a modern Python-based platform, preserving all original content while providing an enhanced user experience with improved performance, better SEO, and a modern, clean design.</p>
+        </section>
+
+        <section>
+            <h2>What We Cover</h2>
+            <p>Our content spans a wide range of programming languages, frameworks, and technologies:</p>
+            <ul>
+                <li><strong>Python Programming:</strong> From basics to advanced topics, data structures, algorithms, and Python frameworks</li>
+                <li><strong>PHP Development:</strong> Server-side scripting, PHP frameworks, and best practices</li>
+                <li><strong>JavaScript & Modern JS:</strong> Vanilla JavaScript, ES6+, React, Vue, Node.js, and more</li>
+                <li><strong>AWS Cloud Services:</strong> Cloud computing, deployment, infrastructure, and AWS best practices</li>
+                <li><strong>Web Development:</strong> HTML, CSS, responsive design, and modern web technologies</li>
+                <li><strong>Coding Tutorials:</strong> Step-by-step guides for building real-world applications</li>
+                <li><strong>Best Practices:</strong> Industry standards, code quality, and development workflows</li>
+                <li><strong>Tips and Tricks:</strong> Time-saving techniques and productivity hacks</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Our Mission</h2>
+            <p>At Learning Master, our mission is to provide high-quality, comprehensive, and accessible educational content that empowers developers to:</p>
+            <ul>
+                <li>Learn new technologies and programming languages</li>
+                <li>Improve their coding skills and best practices</li>
+                <li>Stay updated with the latest trends in web development</li>
+                <li>Build real-world applications with confidence</li>
+                <li>Advance their careers in software development</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Our Values</h2>
+            <ul>
+                <li><strong>Quality Content:</strong> We strive to provide accurate, well-researched, and up-to-date information</li>
+                <li><strong>Accessibility:</strong> Our tutorials are designed to be clear and understandable for developers at all levels</li>
+                <li><strong>Practical Learning:</strong> We focus on real-world examples and practical applications</li>
+                <li><strong>Community:</strong> We encourage interaction, questions, and knowledge sharing</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Get in Touch</h2>
+            <p>We'd love to hear from you! Whether you have questions, suggestions, or feedback, please don't hesitate to reach out:</p>
+            <ul>
+                <li>Email: <a href="mailto:info@learnigmaster.com">info@learnigmaster.com</a></li>
+                <li>Contact Form: <a href="{{ url_for('contact') }}">Visit our contact page</a></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Stay Updated</h2>
+            <p>Don't miss out on our latest tutorials and guides! Subscribe to our newsletter to receive updates about new articles, tips, and resources delivered directly to your inbox.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}
+

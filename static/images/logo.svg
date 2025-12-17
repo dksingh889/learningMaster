@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <style>
+      .logo-text { font-family: Arial, sans-serif; font-weight: bold; }
+    </style>
+  </defs>
+  <!-- Orange Circle Background -->
+  <circle cx="100" cy="100" r="100" fill="#FF6B35"/>
+  
+  <!-- White Horizontal Band -->
+  <rect x="0" y="80" width="200" height="40" fill="white"/>
+  
+  <!-- Open Book Icon (simplified) -->
+  <g transform="translate(100, 70)">
+    <!-- Book base -->
+    <rect x="-30" y="-15" width="60" height="30" fill="white" stroke="black" stroke-width="2" rx="2"/>
+    <!-- Book spine -->
+    <line x1="0" y1="-15" x2="0" y2="15" stroke="black" stroke-width="2"/>
+    <!-- Left page lines -->
+    <line x1="-25" y1="-5" x2="-5" y2="-5" stroke="black" stroke-width="1"/>
+    <line x1="-25" y1="0" x2="-5" y2="0" stroke="black" stroke-width="1"/>
+    <line x1="-25" y1="5" x2="-5" y2="5" stroke="black" stroke-width="1"/>
+    <!-- Right page lines -->
+    <line x1="5" y1="-5" x2="25" y2="-5" stroke="black" stroke-width="1"/>
+    <line x1="5" y1="0" x2="25" y2="0" stroke="black" stroke-width="1"/>
+    <line x1="5" y1="5" x2="25" y2="5" stroke="black" stroke-width="1"/>
+  </g>
+  
+  <!-- Learning Text -->
+  <text x="100" y="125" class="logo-text" font-size="16" text-anchor="middle" fill="black">Learning</text>
+  
+  <!-- Master Text -->
+  <text x="100" y="145" class="logo-text" font-size="16" text-anchor="middle" fill="black">Master</text>
+</svg>

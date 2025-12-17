@@ -1,0 +1,44 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - Admin{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+<p style="margin: 1rem 0;">Welcome to the admin panel. Manage your blog posts from here.</p>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 2rem 0;">
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h3 style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.5rem;">Total Posts</h3>
+        <p style="font-size: 2rem; font-weight: 700; color: #2563eb;">{{ posts|length }}</p>
+    </div>
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h3 style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.5rem;">Categories</h3>
+        <p style="font-size: 2rem; font-weight: 700; color: #10b981;">{{ categories|length }}</p>
+    </div>
+</div>
+
+<h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Posts</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Published</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts[:10] %}
+        <tr>
+            <td><a href="{{ url_for('admin_edit_post', post_id=post.id) }}" style="color: #2563eb; text-decoration: none;">{{ post.title }}</a></td>
+            <td>{{ post.author }}</td>
+            <td>{% if post.published_date %}{{ post.published_date.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+            <td>
+                <a href="{{ url_for('admin_edit_post', post_id=post.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+

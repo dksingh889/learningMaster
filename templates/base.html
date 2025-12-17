@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}Learning Master - Learn Programming & Web Development{% endblock %}</title>
+    <meta name="description" content="{% block description %}Learn Python, PHP, JavaScript, AWS, and modern web development with comprehensive tutorials, guides, and tips.{% endblock %}">
+    <meta name="keywords" content="Python, PHP, JavaScript, AWS, Programming, Web Development, Tutorials, Learning, Coding">
+    <meta name="author" content="Learning Master">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Learning Master - Learn Programming & Web Development{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Learn Python, PHP, JavaScript, AWS, and modern web development with comprehensive tutorials, guides, and tips.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.jpg') }}{% endblock %}">
+    <meta property="og:site_name" content="Learning Master">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{% block twitter_url %}{{ request.url }}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}Learning Master - Learn Programming & Web Development{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Learn Python, PHP, JavaScript, AWS, and modern web development with comprehensive tutorials, guides, and tips.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.jpg') }}{% endblock %}">
+    
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Learning Master",
+      "url": "{{ request.url_root.rstrip('/') }}",
+      "logo": "{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.jpg') }}",
+      "description": "Learn Python, PHP, JavaScript, AWS, and modern web development",
+      "sameAs": []
+    }
+    </script>
+    {% block schema %}{% endblock %}
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ static_version }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/logo.jpg') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header" id="site-header">
+        <div class="header-container">
+            <div class="header-brand">
+                <a href="{{ url_for('index') }}" class="logo-link">
+                    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Learning Master" class="logo-image">
+                    <span class="logo-text">Learning Master</span>
+                </a>
+            </div>
+            
+            <nav class="header-nav" id="header-nav">
+                <ul class="nav-list">
+                    <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                    <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                    {% if categories %}
+                    <li class="nav-dropdown">
+                        <a href="#" class="nav-link">Categories <span class="dropdown-arrow">▼</span></a>
+                        <ul class="dropdown-menu">
+                            {% for category in categories[:10] %}
+                            <li><a href="{{ url_for('category_posts', slug=category.slug) }}">{{ category.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <form class="search-form" action="{{ url_for('search') }}" method="get">
+                    <input type="text" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}" class="search-input" id="search-input">
+                    <button type="submit" class="search-button" aria-label="Search">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </form>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h3 class="footer-title">About</h3>
+                    <p class="footer-text">Learning Master is your go-to resource for learning Python, PHP, JavaScript, AWS, and modern web development. We provide comprehensive tutorials, guides, and tips to help you master programming and web development.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+                        <a href="#" class="social-link" aria-label="GitHub">💻</a>
+                        <a href="#" class="social-link" aria-label="LinkedIn">💼</a>
+                        <a href="#" class="social-link" aria-label="Email">✉️</a>
+                    </div>
+                </div>
+                
+                <div class="footer-column">
+                    <h3 class="footer-title">Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('about') }}">About</a></li>
+                        <li><a href="{{ url_for('search') }}">Search</a></li>
+                        {% if categories[:5] %}
+                        {% for category in categories[:5] %}
+                        <li><a href="{{ url_for('category_posts', slug=category.slug) }}">{{ category.name }}</a></li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3 class="footer-title">Categories</h3>
+                    <ul class="footer-links">
+                        {% if categories %}
+                        {% for category in categories[:8] %}
+                        <li><a href="{{ url_for('category_posts', slug=category.slug) }}">{{ category.name }}</a></li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3 class="footer-title">Contact</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
+                        <li><a href="{{ url_for('about') }}">About Us</a></li>
+                        <li><a href="{{ url_for('privacy_policy') }}">Privacy Policy</a></li>
+                        <li><a href="{{ url_for('terms_conditions') }}">Terms & Conditions</a></li>
+                        <li><a href="{{ url_for('disclaimer') }}">Disclaimer</a></li>
+                        <li><a href="{{ url_for('cookie_policy') }}">Cookie Policy</a></li>
+                        <li><a href="{{ url_for('dmca') }}">DMCA</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="copyright">&copy; 2024 Learning Master. All rights reserved.</p>
+                <p class="footer-meta">Made with ❤️ for developers</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="cookie-consent" style="display: none;">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <p>We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies. <a href="{{ url_for('cookie_policy') }}">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-buttons">
+                <button id="cookie-accept" class="cookie-btn cookie-btn-accept">Accept All</button>
+                <button id="cookie-decline" class="cookie-btn cookie-btn-decline">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v={{ static_version }}"></script>
+    <script src="{{ url_for('static', filename='js/cookie-consent.js') }}?v={{ static_version }}"></script>
+</body>
+</html>

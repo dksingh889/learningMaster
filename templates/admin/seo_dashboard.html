@@ -1,0 +1,178 @@
+{% extends "admin/base.html" %}
+
+{% block title %}SEO Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>SEO Dashboard</h2>
+        <a href="{{ url_for('admin_seo_new_post') }}" class="btn btn-primary">+ New Post</a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.9;">Total Posts</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0;">{{ total_posts }}</p>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.9;">Published</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0;">{{ published_posts }}</p>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.9;">Drafts</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0;">{{ draft_posts }}</p>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.9;">Avg SEO Score</h3>
+        <p style="font-size: 2.5rem; font-weight: 700; margin: 0;">{{ avg_seo_score }}/100</p>
+    </div>
+</div>
+
+            <!-- Quick Actions -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="{{ url_for('admin_seo_new_post') }}" class="btn btn-primary">Create New Post</a>
+                    <a href="{{ url_for('admin_seo_posts') }}" class="btn btn-secondary">View All Posts</a>
+                    <button onclick="showAIGenerator()" class="btn" style="background: #10b981; color: white; border: none;">🤖 Generate AI Post</button>
+                </div>
+            </div>
+            
+            <!-- AI Post Generator Modal -->
+            <div id="ai-generator-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>🤖 AI Post Generator</h2>
+                        <button onclick="closeAIGenerator()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Topic *</label>
+                        <input type="text" id="ai-topic" placeholder="e.g., Python Flask Tutorial, React Hooks Guide, AWS S3 Setup" 
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                        <small style="color: #6b7280; display: block; margin-top: 0.5rem;">Enter the topic you want to create a blog post about</small>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
+                        <select id="ai-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                            <option value="openai">OpenAI (GPT-4o-mini)</option>
+                            <option value="anthropic">Anthropic (Claude)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="ai-status" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="generateAIPost()" class="btn btn-primary" style="flex: 1;">Generate Post</button>
+                        <button onclick="closeAIGenerator()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+            function showAIGenerator() {
+                document.getElementById('ai-generator-modal').style.display = 'flex';
+            }
+            
+            function closeAIGenerator() {
+                document.getElementById('ai-generator-modal').style.display = 'none';
+                document.getElementById('ai-status').style.display = 'none';
+                document.getElementById('ai-topic').value = '';
+            }
+            
+            async function generateAIPost() {
+                const topic = document.getElementById('ai-topic').value.trim();
+                const provider = document.getElementById('ai-provider').value;
+                const statusDiv = document.getElementById('ai-status');
+                
+                if (!topic) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.color = '#991b1b';
+                    statusDiv.textContent = 'Please enter a topic';
+                    return;
+                }
+                
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#dbeafe';
+                statusDiv.style.color = '#1e40af';
+                statusDiv.textContent = '🤖 Generating AI content... This may take 30-60 seconds...';
+                
+                try {
+                    const response = await fetch('/admin/seo/api/generate-post', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({topic, provider})
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        statusDiv.style.background = '#d1fae5';
+                        statusDiv.style.color = '#065f46';
+                        statusDiv.textContent = '✅ Content generated! Filling form...';
+                        
+                        // Fill the form with generated data
+                        setTimeout(() => {
+                            fillFormWithAIData(data.data);
+                            closeAIGenerator();
+                        }, 1000);
+                    } else {
+                        statusDiv.style.background = '#fee2e2';
+                        statusDiv.style.color = '#991b1b';
+                        statusDiv.textContent = '❌ ' + (data.message || 'Failed to generate content');
+                    }
+                } catch (error) {
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.color = '#991b1b';
+                    statusDiv.textContent = '❌ Error: ' + error.message;
+                }
+            }
+            
+            function fillFormWithAIData(data) {
+                // Always navigate to new post page with AI data
+                window.location.href = '{{ url_for("admin_seo_new_post") }}?ai_data=' + encodeURIComponent(JSON.stringify(data));
+            }
+            </script>
+
+<!-- Recent Posts -->
+<h3 style="margin-bottom: 1rem;">Recent Posts</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Status</th>
+            <th>Published</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in recent_posts %}
+        <tr>
+            <td><a href="{{ url_for('admin_seo_post_detail', post_id=post.id) }}" style="color: #2563eb; text-decoration: none;">{{ post.title }}</a></td>
+            <td>{{ post.author }}</td>
+            <td>
+                <span style="padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; 
+                    {% if post.status == 'published' %}background: #d1fae5; color: #065f46;
+                    {% elif post.status == 'draft' %}background: #fef3c7; color: #92400e;
+                    {% else %}background: #e5e7eb; color: #374151;{% endif %}">
+                    {{ post.status|title }}
+                </span>
+            </td>
+            <td>{% if post.published_date %}{{ post.published_date.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+            <td>
+                <a href="{{ url_for('admin_seo_post_detail', post_id=post.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">View SEO</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+

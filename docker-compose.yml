@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: learningmaster-web
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
+      # Always use host.docker.internal to connect to localhost MySQL
+      # If you have DATABASE_URL in .env, update it to use host.docker.internal instead of localhost
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-bloguser}:${MYSQL_PASSWORD:-password}@host.docker.internal:3306/${MYSQL_DATABASE:-learningmaster}
+      - MYSQL_USER=${MYSQL_USER:-bloguser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-learningmaster}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - .:/app
+      - ./static/uploads:/app/static/uploads
+      - ./static/videos:/app/static/videos
+      - ./instance:/app/instance
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+

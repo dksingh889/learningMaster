@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Search{% if query %}: {{ query }}{% endif %} - Learning Master{% endblock %}
+
+{% block content %}
+<section class="posts-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h1 class="section-title">
+                {% if query %}
+                Search Results for: "{{ query }}"
+                {% else %}
+                Search Posts
+                {% endif %}
+            </h1>
+            <p class="section-subtitle">
+                {% if query and posts.items %}
+                Found {{ posts.total }} result{{ 's' if posts.total != 1 else '' }}
+                {% elif query %}
+                No results found
+                {% else %}
+                Enter a search term to find posts
+                {% endif %}
+            </p>
+        </div>
+        
+        {% if query and posts.items %}
+        <div class="posts-grid">
+            {% for post in posts.items %}
+            <article class="post-card">
+                <div class="post-card-image">
+                    {% if post.featured_image %}
+                    <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy">
+                    {% else %}
+                    {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
+                    {% if first_image %}
+                    <img src="{{ first_image }}" alt="{{ post.title }}" loading="lazy">
+                    {% else %}
+                    <div class="post-card-placeholder">
+                        <span class="placeholder-icon">📝</span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% set first_category = post.categories.first() %}
+                    {% if first_category %}
+                    <div class="post-card-category">
+                        <a href="{{ url_for('category_posts', slug=first_category.slug) }}" class="category-badge">
+                            {{ first_category.name }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="post-card-content">
+                    <div class="post-card-meta">
+                        <time datetime="{{ post.published_date.isoformat() }}" class="post-date">
+                            {{ post.published_date.strftime('%B %d, %Y') }}
+                        </time>
+                        <span class="post-author">by {{ post.author }}</span>
+                    </div>
+                    
+                    <h3 class="post-card-title">
+                        <a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a>
+                    </h3>
+                    
+                    <p class="post-card-excerpt">
+                        {{ post.content | process_content | striptags | truncate(150) }}
+                    </p>
+                    
+                    <div class="post-card-footer">
+                        <a href="{{ url_for('post_detail', slug=post.slug) }}" class="read-more-link">
+                            Read more
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        
+        {% if posts.pages > 1 %}
+        <div class="pagination-wrapper">
+            <nav class="pagination" aria-label="Pagination">
+                {% if posts.has_prev %}
+                <a href="{{ url_for('search', q=query, page=posts.prev_num) }}" class="pagination-link pagination-prev">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                </a>
+                {% endif %}
+                
+                <div class="pagination-pages">
+                    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == posts.page %}
+                            <span class="pagination-page pagination-current">{{ page_num }}</span>
+                            {% else %}
+                            <a href="{{ url_for('search', q=query, page=page_num) }}" class="pagination-page">{{ page_num }}</a>
+                            {% endif %}
+                        {% else %}
+                            <span class="pagination-ellipsis">…</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                {% if posts.has_next %}
+                <a href="{{ url_for('search', q=query, page=posts.next_num) }}" class="pagination-link pagination-next">
+                    Next
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        
+        {% elif query %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3 class="empty-state-title">No results found</h3>
+            <p class="empty-state-text">Try different keywords or browse our categories</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3 class="empty-state-title">Search Posts</h3>
+            <p class="empty-state-text">Use the search bar in the header to find articles</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

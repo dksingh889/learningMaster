@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Disclaimer - Learning Master{% endblock %}
+{% block description %}Read our Disclaimer to understand the limitations and scope of information provided on Learning Master.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Disclaimer - Learning Master",
+  "description": "Disclaimer for Learning Master",
+  "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Disclaimer</h1>
+        <p class="page-subtitle">Last Updated: {{ current_date }}</p>
+    </div>
+
+    <div class="legal-content">
+        <section>
+            <h2>1. General Information</h2>
+            <p>The information contained on Learning Master website (the "Service") is for general information purposes only. While we endeavor to keep the information up to date and correct, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability with respect to the website or the information, products, services, or related graphics contained on the website for any purpose.</p>
+        </section>
+
+        <section>
+            <h2>2. No Professional Advice</h2>
+            <p>The content on this website, including but not limited to tutorials, guides, and code examples, is provided for educational and informational purposes only. It is not intended to be a substitute for professional advice, diagnosis, or treatment. Always seek the advice of qualified professionals regarding any questions you may have.</p>
+        </section>
+
+        <section>
+            <h2>3. Accuracy of Information</h2>
+            <p>We strive to provide accurate and up-to-date information, but we cannot guarantee that all information on this website is complete, accurate, or current. Technology and best practices change rapidly, and information that was accurate at the time of publication may become outdated.</p>
+        </section>
+
+        <section>
+            <h2>4. Code Examples and Tutorials</h2>
+            <p>Code examples, tutorials, and guides provided on this website are for educational purposes. While we make every effort to ensure code examples are correct and functional, we cannot guarantee they will work in all environments or with all configurations. Always test code in a safe environment before using it in production.</p>
+        </section>
+
+        <section>
+            <h2>5. External Links</h2>
+            <p>Our website may contain links to external websites that are not provided or maintained by or in any way affiliated with Learning Master. We do not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites. The inclusion of any link does not imply endorsement by Learning Master of the site.</p>
+        </section>
+
+        <section>
+            <h2>6. Limitation of Liability</h2>
+            <p>In no event will Learning Master, its owners, employees, or affiliates be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the use of this website.</p>
+        </section>
+
+        <section>
+            <h2>7. Third-Party Services</h2>
+            <p>This website may use third-party services, including but not limited to Google AdSense, analytics services, and social media platforms. We are not responsible for the privacy practices, content, or actions of these third-party services.</p>
+        </section>
+
+        <section>
+            <h2>8. Affiliate Disclosure</h2>
+            <p>Some links on this website may be affiliate links. This means we may earn a commission if you click on the link and make a purchase. This does not affect the price you pay and helps support the maintenance of this website.</p>
+        </section>
+
+        <section>
+            <h2>9. No Warranty</h2>
+            <p>Every effort is made to keep the website up and running smoothly. However, Learning Master takes no responsibility for, and will not be liable for, the website being temporarily unavailable due to technical issues beyond our control.</p>
+        </section>
+
+        <section>
+            <h2>10. Changes to Disclaimer</h2>
+            <p>We reserve the right to update this disclaimer at any time without prior notice. Your continued use of the website after any changes constitutes acceptance of the updated disclaimer.</p>
+        </section>
+
+        <section>
+            <h2>11. Contact Us</h2>
+            <p>If you have any questions about this Disclaimer, please contact us:</p>
+            <ul>
+                <li>Email: <a href="mailto:info@learnigmaster.com">info@learnigmaster.com</a></li>
+                <li>Website: <a href="{{ url_for('contact') }}">Contact Page</a></li>
+            </ul>
+        </section>
+    </div>
+</div>
+{% endblock %}
+

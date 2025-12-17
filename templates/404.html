@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Page Not Found - Learning Master{% endblock %}
+{% block description %}The page you're looking for doesn't exist. Return to Learning Master homepage.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "404 - Page Not Found",
+  "description": "The page you're looking for doesn't exist",
+  "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="error-page">
+        <div class="error-content">
+            <div class="error-icon">🔍</div>
+            <h1 class="error-code">404</h1>
+            <h2 class="error-title">Page Not Found</h2>
+            <p class="error-description">The page you're looking for doesn't exist or has been moved.</p>
+            <div class="error-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">← Back to Home</a>
+                <a href="{{ url_for('search') }}" class="btn btn-outline">Search Articles</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

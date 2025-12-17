@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: learningmaster-web
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - MYSQL_USER=${MYSQL_USER:-bloguser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-learningmaster}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./static/uploads:/app/static/uploads
+      - ./static/videos:/app/static/videos
+      - ./instance:/app/instance
+    restart: always
+    # For EC2, connect to MySQL on host (localhost from container perspective)
+    # If MySQL is on EC2, use host.docker.internal or 172.17.0.1
+    # If MySQL is on RDS, use RDS endpoint directly
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}DMCA Policy - Learning Master{% endblock %}
+{% block description %}Digital Millennium Copyright Act (DMCA) Policy for Learning Master. Learn how to report copyright infringement.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "DMCA Policy - Learning Master",
+  "description": "DMCA Policy for Learning Master",
+  "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">DMCA Policy</h1>
+        <p class="page-subtitle">Digital Millennium Copyright Act Notice and Takedown Procedure</p>
+    </div>
+
+    <div class="legal-content">
+        <section>
+            <h2>1. Introduction</h2>
+            <p>Learning Master respects the intellectual property rights of others and expects its users to do the same. In accordance with the Digital Millennium Copyright Act (DMCA), we will respond to clear notices of alleged copyright infringement that comply with the DMCA.</p>
+        </section>
+
+        <section>
+            <h2>2. Reporting Copyright Infringement</h2>
+            <p>If you believe that content on Learning Master infringes your copyright, please provide us with the following information in writing:</p>
+            <ol>
+                <li><strong>Identification of the copyrighted work:</strong> A description of the copyrighted work that you claim has been infringed, or if multiple works are covered, a representative list of such works.</li>
+                <li><strong>Identification of the infringing material:</strong> A description of where the material that you claim is infringing is located on the website, including the URL(s) or other specific location information.</li>
+                <li><strong>Your contact information:</strong> Your name, address, telephone number, and email address.</li>
+                <li><strong>Statement of good faith:</strong> A statement that you have a good faith belief that the disputed use is not authorized by the copyright owner, its agent, or the law.</li>
+                <li><strong>Statement of accuracy:</strong> A statement that the information in your notice is accurate and, under penalty of perjury, that you are the copyright owner or authorized to act on behalf of the copyright owner.</li>
+                <li><strong>Signature:</strong> Your physical or electronic signature.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>3. Where to Send DMCA Notices</h2>
+            <p>Please send your DMCA notice to our designated Copyright Agent:</p>
+            <div class="contact-box">
+                <p><strong>Copyright Agent</strong><br>
+                Learning Master<br>
+                Email: <a href="mailto:dmca@learnigmaster.com">dmca@learnigmaster.com</a><br>
+                Subject: DMCA Copyright Infringement Notice</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>4. Counter-Notification</h2>
+            <p>If you believe that your content was removed in error, you may file a counter-notification. Your counter-notification must include:</p>
+            <ol>
+                <li>Identification of the material that has been removed or disabled and the location where it appeared before it was removed or disabled</li>
+                <li>A statement under penalty of perjury that you have a good faith belief that the material was removed or disabled as a result of mistake or misidentification</li>
+                <li>Your name, address, telephone number, and email address</li>
+                <li>A statement that you consent to the jurisdiction of the federal court in your district, or if outside the United States, to the jurisdiction of the courts where Learning Master is located</li>
+                <li>Your physical or electronic signature</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>5. Repeat Infringers</h2>
+            <p>It is our policy to terminate, in appropriate circumstances, the accounts of users who are repeat infringers of copyright. We reserve the right to remove content and terminate accounts at any time, including in cases where we have a good faith belief that copyright infringement has occurred.</p>
+        </section>
+
+        <section>
+            <h2>6. False Claims</h2>
+            <p>Please note that under Section 512(f) of the DMCA, any person who knowingly materially misrepresents that material or activity is infringing may be subject to liability. We reserve the right to seek damages from any party that submits a false notification of claimed infringement.</p>
+        </section>
+
+        <section>
+            <h2>7. Processing Time</h2>
+            <p>We will acknowledge receipt of your DMCA notice within 48 hours and will process valid notices promptly. Typically, we will remove or disable access to the allegedly infringing material within 10 business days of receiving a valid notice.</p>
+        </section>
+
+        <section>
+            <h2>8. Modifications</h2>
+            <p>We reserve the right to modify this DMCA Policy at any time. Changes will be effective immediately upon posting to this page. Your continued use of the website after any changes constitutes acceptance of the updated policy.</p>
+        </section>
+
+        <section>
+            <h2>9. Contact Information</h2>
+            <p>For questions about this DMCA Policy, please contact us:</p>
+            <ul>
+                <li>Email: <a href="mailto:info@learnigmaster.com">info@learnigmaster.com</a></li>
+                <li>DMCA Agent: <a href="mailto:dmca@learnigmaster.com">dmca@learnigmaster.com</a></li>
+                <li>Website: <a href="{{ url_for('contact') }}">Contact Page</a></li>
+            </ul>
+        </section>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - Learning Master{% endblock %}
+{% block description %}{{ post.content | process_content | striptags | truncate(160) }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.content | process_content | striptags | truncate(160) }}{% endblock %}
+{% block twitter_title %}{{ post.title }}{% endblock %}
+{% block twitter_description %}{{ post.content | process_content | striptags | truncate(160) }}{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ post.title | e }}",
+  "description": "{{ post.content | process_content | striptags | truncate(200) | e }}",
+  "image": "{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.jpg') }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ post.author | e }}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Learning Master",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='images/logo.jpg') }}"
+    }
+  },
+  "datePublished": "{{ post.published_date.isoformat() }}",
+  "dateModified": "{{ post.updated_at.isoformat() }}",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "{{ request.url }}"
+  },
+  "articleSection": "{% if post.categories.first() %}{{ post.categories.first().name | e }}{% else %}Programming{% endif %}"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ request.url_root.rstrip('/') }}{{ url_for('index') }}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ post.title | e }}",
+      "item": "{{ request.url }}"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="blog-post">
+    <div class="post-container">
+        <div class="post-main">
+            <!-- Post Header -->
+            <header class="post-header">
+                {% if post.categories %}
+                <div class="post-categories-header">
+                    {% for category in post.categories %}
+                    <a href="{{ url_for('category_posts', slug=category.slug) }}" class="post-category-badge">
+                        {{ category.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
+                {% if post.featured_image or first_image %}
+                <div class="post-featured-image">
+                    <img src="{{ post.featured_image or first_image }}" alt="{{ post.title }}" loading="eager">
+                </div>
+                {% endif %}
+                
+                <h1 class="post-title-main">{{ post.title }}</h1>
+                
+                {% if post.content | process_content | striptags | length > 200 %}
+                <p class="post-subtitle">{{ post.content | process_content | striptags | truncate(200) }}</p>
+                {% endif %}
+                
+                <div class="post-meta-main">
+                    <div class="post-author-box">
+                        <div class="author-avatar">
+                            <span>{{ post.author[0] if post.author else 'A' }}</span>
+                        </div>
+                        <div class="author-info">
+                            <span class="author-name">{{ post.author }}</span>
+                            <time datetime="{{ post.published_date.isoformat() }}" class="post-date-main">
+                                {{ post.published_date.strftime('%B %d, %Y') }}
+                            </time>
+                        </div>
+                    </div>
+                    
+                    <div class="post-meta-actions">
+                        <span class="reading-time" id="reading-time">⏱️ Calculating...</span>
+                        <div class="social-share">
+                            <button class="share-button" data-share="twitter" aria-label="Share on Twitter">🐦</button>
+                            <button class="share-button" data-share="facebook" aria-label="Share on Facebook">📘</button>
+                            <button class="share-button" data-share="linkedin" aria-label="Share on LinkedIn">💼</button>
+                            <button class="share-button" data-share="copy" aria-label="Copy link">🔗</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Table of Contents -->
+            <div class="post-toc" id="post-toc">
+                <div class="toc-header">
+                    <h3 class="toc-title">Table of Contents</h3>
+                    <button class="toc-toggle" id="toc-toggle" aria-label="Toggle table of contents">▼</button>
+                </div>
+                <nav class="toc-content" id="toc-content">
+                    <ul class="toc-list" id="toc-list">
+                        <!-- Auto-generated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+            
+            <!-- Post Content -->
+            <div class="post-content-main">
+                <div class="post-content-article">
+                    {{ post.content | process_content | safe }}
+                </div>
+            </div>
+            
+            <!-- Post Footer -->
+            <footer class="post-footer-main">
+                {% if post.categories %}
+                <div class="post-tags">
+                    <span class="tags-label">Tags:</span>
+                    {% for category in post.categories %}
+                    <a href="{{ url_for('category_posts', slug=category.slug) }}" class="post-tag">{{ category.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Next/Previous Navigation -->
+                <div class="post-navigation">
+                    {% if prev_post %}
+                    <a href="{{ url_for('post_detail', slug=prev_post.slug) }}" class="nav-post nav-post-prev">
+                        <span class="nav-post-label">← Previous Post</span>
+                        <span class="nav-post-title">{{ prev_post.title }}</span>
+                    </a>
+                    {% endif %}
+                    {% if next_post %}
+                    <a href="{{ url_for('post_detail', slug=next_post.slug) }}" class="nav-post nav-post-next">
+                        <span class="nav-post-label">Next Post →</span>
+                        <span class="nav-post-title">{{ next_post.title }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div class="post-footer-actions">
+                    {% if post.url %}
+                    <a href="{{ post.url }}" target="_blank" rel="noopener" class="btn btn-outline">
+                        View Original Post
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('index') }}" class="btn btn-outline">
+                        ← Back to Home
+                    </a>
+                </div>
+            </footer>
+        </div>
+        
+        <!-- Sidebar -->
+        <aside class="post-sidebar">
+            <div class="sidebar-sticky">
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Share Article</h3>
+                    <div class="share-buttons-vertical">
+                        <button class="share-btn" data-share="twitter">🐦 Twitter</button>
+                        <button class="share-btn" data-share="facebook">📘 Facebook</button>
+                        <button class="share-btn" data-share="linkedin">💼 LinkedIn</button>
+                        <button class="share-btn" data-share="copy">🔗 Copy Link</button>
+                    </div>
+                </div>
+                
+                {% if categories %}
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Categories</h3>
+                    <ul class="widget-list">
+                        {% for category in categories[:10] %}
+                        <li>
+                            <a href="{{ url_for('category_posts', slug=category.slug) }}" class="widget-link">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if recent_posts %}
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Recent Posts</h3>
+                    <ul class="widget-list">
+                        {% for recent_post in recent_posts[:5] %}
+                        {% if recent_post.id != post.id %}
+                        <li>
+                            <a href="{{ url_for('post_detail', slug=recent_post.slug) }}" class="widget-link">
+                                {{ recent_post.title }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</article>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+
+{% block title %}New Post - Admin{% endblock %}
+
+{% block content %}
+<h2>Create New Post</h2>
+
+<form method="POST" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 1.5rem;">
+    <div class="form-group">
+        <label for="title">Title *</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="content">Content * (HTML supported)</label>
+        <textarea id="content" name="content" required></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="author">Author</label>
+        <input type="text" id="author" name="author" value="Admin">
+    </div>
+    
+    <div class="form-group">
+        <label for="published_date">Published Date</label>
+        <input type="date" id="published_date" name="published_date" value="{{ today_date }}">
+    </div>
+    
+    <div class="form-group">
+        <label>Categories</label>
+        <div class="checkbox-group">
+            {% for category in categories %}
+            <div class="checkbox-item">
+                <input type="checkbox" id="cat_{{ category.id }}" name="categories" value="{{ category.name }}">
+                <label for="cat_{{ category.id }}" style="margin: 0; font-weight: normal;">{{ category.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        <input type="text" name="categories" placeholder="Or enter new categories (comma-separated)" style="margin-top: 0.5rem;">
+    </div>
+    
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">Create Post</button>
+        <a href="{{ url_for('admin_seo_posts') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
