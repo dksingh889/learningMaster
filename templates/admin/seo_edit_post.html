@@ -895,9 +895,12 @@ async function regenerateAIPost() {
             statusDiv.style.color = '#065f46';
             statusDiv.textContent = '✅ Content regenerated! Updating form...';
             
-            // Fill the form with regenerated data
+            // Fill the form with regenerated data directly (for edit page)
+            // If data is too large, it will be stored in session and page will reload
             setTimeout(() => {
-                fillFormWithAIData(data.data);
+                if (data.data) {
+                    fillFormWithAIData(data.data);
+                }
                 closeAIRegenerate();
             }, 1000);
         } else {

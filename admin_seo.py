@@ -1,7 +1,7 @@
 """
 SEO-Optimized Admin Panel for Blog Posts
 """
-from flask import render_template, request, redirect, url_for, flash, jsonify, Response
+from flask import render_template, request, redirect, url_for, flash, jsonify, Response, session
 from datetime import datetime
 import os
 import re
@@ -315,18 +315,29 @@ def register_seo_admin_routes(app, db, Post, Category):
         categories = Category.query.all()
         today_date = datetime.now().strftime('%Y-%m-%d')
         
-        # Check for AI-generated data in URL parameters
+        # Check for AI-generated data in session (using session key from URL or direct session check)
         form_data = {}
         seo_data = {}
         
-        ai_data_param = request.args.get('ai_data')
-        if ai_data_param:
+        # Check for session key in URL parameter
+        session_key = request.args.get('ai_key')
+        ai_data = None
+        
+        if session_key and session_key.startswith('ai_data_'):
+            # Retrieve from session using key
+            ai_data = session.get(session_key)
+            if ai_data:
+                # Clear session after use
+                session.pop(session_key, None)
+        else:
+            # Check for any ai_data_* keys in session (fallback)
+            for key in list(session.keys()):
+                if key.startswith('ai_data_'):
+                    ai_data = session.pop(key, None)
+                    break
+        
+        if ai_data:
             try:
-                import urllib.parse
-                # URL decode and parse JSON
-                decoded_data = urllib.parse.unquote(ai_data_param)
-                ai_data = json.loads(decoded_data)
-                
                 # Pre-fill form data
                 form_data = {
                     'title': ai_data.get('title', ''),
@@ -973,9 +984,16 @@ def register_seo_admin_routes(app, db, Post, Category):
             generated_data = generate_seo_post(topic, api_key, provider)
             
             if generated_data:
+                # Store in session instead of URL to avoid 414 error
+                import uuid
+                session_key = f'ai_data_{uuid.uuid4().hex[:12]}'
+                session[session_key] = generated_data
+                session.permanent = True  # Make session persist
+                
                 return jsonify({
                     'success': True,
                     'data': generated_data,
+                    'session_key': session_key,  # Return key for redirect
                     'message': 'AI content generated successfully'
                 })
             else:
@@ -1021,9 +1039,16 @@ def register_seo_admin_routes(app, db, Post, Category):
             generated_data = generate_seo_post(topic, api_key, provider)
             
             if generated_data:
+                # Store in session instead of URL to avoid 414 error
+                import uuid
+                session_key = f'ai_data_{uuid.uuid4().hex[:12]}'
+                session[session_key] = generated_data
+                session.permanent = True
+                
                 return jsonify({
                     'success': True,
                     'data': generated_data,
+                    'session_key': session_key,
                     'message': 'AI content regenerated successfully'
                 })
             else:

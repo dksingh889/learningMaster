@@ -116,13 +116,13 @@
                     if (data.success) {
                         statusDiv.style.background = '#d1fae5';
                         statusDiv.style.color = '#065f46';
-                        statusDiv.textContent = '✅ Content generated! Filling form...';
+                        statusDiv.textContent = '✅ Content generated! Redirecting to form...';
                         
-                        // Fill the form with generated data
+                        // Redirect to new post page with session key (avoids 414 error)
+                        const sessionKey = data.session_key || 'ai_data_default';
                         setTimeout(() => {
-                            fillFormWithAIData(data.data);
-                            closeAIGenerator();
-                        }, 1000);
+                            window.location.href = `/admin/seo/posts/new?ai_key=${sessionKey}`;
+                        }, 500);
                     } else {
                         statusDiv.style.background = '#fee2e2';
                         statusDiv.style.color = '#991b1b';
@@ -136,8 +136,8 @@
             }
             
             function fillFormWithAIData(data) {
-                // Always navigate to new post page with AI data
-                window.location.href = '{{ url_for("admin_seo_new_post") }}?ai_data=' + encodeURIComponent(JSON.stringify(data));
+                // This function is no longer used - data is now stored in session
+                // Redirect handled in generateAIPost function above
             }
             </script>
 
