@@ -314,9 +314,69 @@ def register_seo_admin_routes(app, db, Post, Category):
         # GET request - show form
         categories = Category.query.all()
         today_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Check for AI-generated data in URL parameters
+        form_data = {}
+        seo_data = {}
+        
+        ai_data_param = request.args.get('ai_data')
+        if ai_data_param:
+            try:
+                import urllib.parse
+                # URL decode and parse JSON
+                decoded_data = urllib.parse.unquote(ai_data_param)
+                ai_data = json.loads(decoded_data)
+                
+                # Pre-fill form data
+                form_data = {
+                    'title': ai_data.get('title', ''),
+                    'slug': create_slug(ai_data.get('title', '')),
+                    'content': ai_data.get('content', ''),
+                    'excerpt': ai_data.get('excerpt', ''),
+                    'author': 'Admin',
+                    'status': 'draft',
+                    'published_date': today_date
+                }
+                
+                # Pre-fill SEO data
+                seo_data = {
+                    'primary_keyword': ai_data.get('primary_keyword', ''),
+                    'secondary_keywords': ai_data.get('secondary_keywords', ''),
+                    'meta_title': ai_data.get('meta_title', ''),
+                    'meta_description': ai_data.get('meta_description', ''),
+                    'og_title': ai_data.get('og_title', ''),
+                    'og_description': ai_data.get('og_description', ''),
+                    'og_image': '',
+                    'twitter_title': '',
+                    'twitter_description': '',
+                    'twitter_image': '',
+                    'canonical_url': '',
+                    'schema_type': 'Article'
+                }
+                
+                # Parse categories from comma-separated string
+                if ai_data.get('categories'):
+                    category_list = [cat.strip() for cat in ai_data.get('categories', '').split(',')]
+                    # Check which categories already exist in database
+                    existing_category_names = [cat.name for cat in categories]
+                    matched_categories = [cat for cat in category_list if cat in existing_category_names]
+                    new_categories = [cat for cat in category_list if cat not in existing_category_names]
+                    
+                    form_data['categories'] = matched_categories  # For checkbox pre-checking
+                    form_data['categories_input'] = ', '.join(new_categories) if new_categories else ''  # For text input field
+                else:
+                    form_data['categories'] = []
+                    form_data['categories_input'] = ''
+                
+                flash('AI-generated content loaded! Review and edit as needed.', 'success')
+            except Exception as e:
+                flash(f'Error loading AI data: {str(e)}', 'error')
+        
         return render_template('admin/seo_new_post.html',
                              categories=categories,
-                             today_date=today_date)
+                             today_date=today_date,
+                             form_data=form_data,
+                             seo_data=seo_data)
     
     @app.route('/admin/seo/posts/<int:post_id>/edit', methods=['GET', 'POST'])
     @login_required
