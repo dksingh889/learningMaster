@@ -7,6 +7,7 @@ from flask import render_template, request, redirect, url_for, flash
 from datetime import datetime
 import re
 from utils import process_blog_content
+from auth import login_required
 
 
 def create_slug(text):
@@ -20,6 +21,7 @@ def register_admin_routes(app, db, Post, Category):
     """Register admin routes with the Flask app - Redirects to SEO dashboard"""
     
     @app.route('/admin')
+    @login_required
     def admin_index():
         """Redirect to SEO dashboard"""
         try:
@@ -30,6 +32,7 @@ def register_admin_routes(app, db, Post, Category):
             return redirect('/')
     
     @app.route('/admin/posts')
+    @login_required
     def admin_posts():
         """Redirect to SEO posts list"""
         try:
@@ -38,6 +41,7 @@ def register_admin_routes(app, db, Post, Category):
             return redirect('/')
     
     @app.route('/admin/posts/new', methods=['GET', 'POST'])
+    @login_required
     def admin_new_post():
         """Redirect to SEO post creation"""
         return redirect(url_for('admin_seo_new_post'))
@@ -113,6 +117,7 @@ def register_admin_routes(app, db, Post, Category):
         return render_template('admin/new_post.html', categories=categories, today_date=today_date)
     
     @app.route('/admin/posts/<int:post_id>/edit', methods=['GET', 'POST'])
+    @login_required
     def admin_edit_post(post_id):
         """Redirect to SEO post detail/analysis"""
         try:
@@ -183,6 +188,7 @@ def register_admin_routes(app, db, Post, Category):
         return render_template('admin/edit_post.html', post=post, categories=categories, post_categories=post_categories, today_date=today_date)
     
     @app.route('/admin/posts/<int:post_id>/delete', methods=['POST'])
+    @login_required
     def admin_delete_post(post_id):
         """Delete a post"""
         post = Post.query.get_or_404(post_id)

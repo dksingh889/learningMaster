@@ -20,9 +20,23 @@
             color: white;
             padding: 1rem 2rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .admin-header h1 {
             font-size: 1.5rem;
+        }
+        .admin-header .logout-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .admin-header .logout-link:hover {
+            background: rgba(255,255,255,0.2);
         }
         .admin-nav {
             background: white;
@@ -151,6 +165,7 @@
 <body>
     <header class="admin-header">
         <h1>Learning Master - SEO Admin Panel</h1>
+        <a href="{{ url_for('admin_logout') }}" class="logout-link">Logout</a>
     </header>
     
     <nav class="admin-nav">
@@ -173,6 +188,27 @@
         
         {% block content %}{% endblock %}
     </div>
+    
+    <footer style="text-align: center; padding: 1rem; margin-top: 3rem; color: #666; font-size: 0.875rem; border-top: 1px solid #e5e7eb;">
+        <p>&copy; 2024 Learning Master Admin</p>
+    </footer>
+    
+    <script>
+        // Auto-hide success messages after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessages = document.querySelectorAll('.flash-message.flash-success, .alert-message.alert-success');
+            successMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s, transform 0.5s';
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(-10px)';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 3000);
+            });
+        });
+    </script>
 </body>
 </html>
 

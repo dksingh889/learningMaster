@@ -15,6 +15,7 @@ from seo_utils import (
     suggest_faqs, calculate_seo_score, validate_seo_fields, generate_internal_link_suggestions
 )
 from flask import url_for
+from auth import login_required
 
 # SEO models - will be defined inside register_seo_admin_routes to avoid circular imports
 PostSEO = None
@@ -105,6 +106,7 @@ def register_seo_admin_routes(app, db, Post, Category):
     
     @app.route('/admin')
     @app.route('/admin/seo')
+    @login_required
     def admin_seo_dashboard():
         """SEO Dashboard - Main admin entry point"""
         total_posts = Post.query.count()
@@ -141,6 +143,7 @@ def register_seo_admin_routes(app, db, Post, Category):
     
     @app.route('/admin/posts/new', methods=['GET', 'POST'])
     @app.route('/admin/seo/posts/new', methods=['GET', 'POST'])
+    @login_required
     def admin_seo_new_post():
         """Create new post with SEO optimization"""
         if request.method == 'POST':
@@ -316,6 +319,7 @@ def register_seo_admin_routes(app, db, Post, Category):
                              today_date=today_date)
     
     @app.route('/admin/seo/posts/<int:post_id>/edit', methods=['GET', 'POST'])
+    @login_required
     def admin_seo_edit_post(post_id):
         """Edit existing post with SEO optimization"""
         post = Post.query.get_or_404(post_id)
@@ -573,6 +577,7 @@ def register_seo_admin_routes(app, db, Post, Category):
     
     @app.route('/admin/posts')
     @app.route('/admin/seo/posts')
+    @login_required
     def admin_seo_posts():
         """List all posts with SEO scores"""
         page = request.args.get('page', 1, type=int)
@@ -595,6 +600,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         return render_template('admin/seo_posts.html', posts=posts, seo_scores=seo_scores)
     
     @app.route('/admin/seo/posts/<int:post_id>/delete', methods=['POST'])
+    @login_required
     def admin_seo_delete_post(post_id):
         """Delete a post and its related SEO data"""
         post = Post.query.get_or_404(post_id)
@@ -701,6 +707,7 @@ def register_seo_admin_routes(app, db, Post, Category):
     
     @app.route('/admin/posts/<int:post_id>')
     @app.route('/admin/seo/posts/<int:post_id>')
+    @login_required
     def admin_seo_post_detail(post_id):
         """View post with SEO analysis"""
         post = Post.query.get_or_404(post_id)
@@ -765,6 +772,7 @@ def register_seo_admin_routes(app, db, Post, Category):
                              suggestions=suggestions)
     
     @app.route('/admin/seo/api/suggestions', methods=['POST'])
+    @login_required
     def api_seo_suggestions():
         """API endpoint for SEO suggestions"""
         data = request.get_json()
@@ -786,6 +794,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         return jsonify(suggestions)
     
     @app.route('/admin/seo/api/auto-generate-seo', methods=['POST'])
+    @login_required
     def api_auto_generate_seo():
         """API endpoint to auto-generate all SEO fields"""
         try:
@@ -840,6 +849,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
     
     @app.route('/admin/seo/api/preview', methods=['POST'])
+    @login_required
     def api_seo_preview():
         """API endpoint for post preview"""
         data = request.get_json()
@@ -855,6 +865,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         return jsonify(preview_data)
     
     @app.route('/admin/seo/upload', methods=['POST'])
+    @login_required
     def admin_seo_upload_image():
         """Upload image for blog post"""
         if 'file' not in request.files:
@@ -882,6 +893,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         return jsonify({'error': 'Invalid file type'}), 400
     
     @app.route('/admin/seo/api/generate-post', methods=['POST'])
+    @login_required
     def api_generate_ai_post():
         """API endpoint to generate AI SEO-optimized post"""
         try:
@@ -918,6 +930,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
     
     @app.route('/admin/seo/api/regenerate-post', methods=['POST'])
+    @login_required
     def api_regenerate_ai_post():
         """API endpoint to regenerate AI content for existing post"""
         try:

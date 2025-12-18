@@ -440,6 +440,10 @@ def not_found(error):
     return render_template('404.html'), 404
 
 
+# Import and initialize authentication
+from auth import init_auth_routes
+init_auth_routes(app)
+
 # Import admin routes (optional - uncomment to enable admin panel)
 from admin import register_admin_routes
 register_admin_routes(app, db, Post, Category)  # This adds /admin routes to the main app
