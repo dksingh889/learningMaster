@@ -12,6 +12,15 @@
             </p>
         </div>
         <div style="display: flex; gap: 0.5rem;">
+            {% if post.status == 'draft' %}
+            <form method="POST" action="{{ url_for('admin_seo_toggle_post_status', post_id=post.id) }}" style="display: inline;">
+                <button type="submit" class="btn" style="background: #10b981; color: white; border: none;">📢 Publish</button>
+            </form>
+            {% else %}
+            <form method="POST" action="{{ url_for('admin_seo_toggle_post_status', post_id=post.id) }}" style="display: inline;">
+                <button type="submit" class="btn" style="background: #f59e0b; color: white; border: none;">📝 Unpublish</button>
+            </form>
+            {% endif %}
             <a href="{{ url_for('admin_seo_edit_post', post_id=post.id) }}" class="btn btn-primary">Edit Post</a>
             <button onclick="showAIRegenerate()" class="btn" style="background: #10b981; color: white; border: none;">🤖 AI Regenerate</button>
             <a href="{{ url_for('admin_seo_posts') }}" class="btn btn-secondary">Back to Posts</a>
@@ -233,8 +242,8 @@
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
             <select id="ai-regenerate-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
-                <option value="openai">OpenAI (GPT-4o-mini)</option>
-                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI (GPT-4o) - Best Quality</option>
+                <option value="anthropic">Anthropic (Claude 3.5 Sonnet) - Best Quality</option>
             </select>
         </div>
         

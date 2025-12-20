@@ -239,6 +239,7 @@ def register_seo_admin_routes(app, db, Post, Category):
                 content=processed_content,
                 excerpt=excerpt,
                 featured_image=featured_image,
+                youtube_video_url=youtube_video_url,
                 published_date=published_date,
                 author=author,
                 status=status
@@ -403,6 +404,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             excerpt = request.form.get('excerpt', '').strip()
             author = request.form.get('author', 'Admin').strip() or 'Admin'
             featured_image = request.form.get('featured_image', '').strip()
+            youtube_video_url = request.form.get('youtube_video_url', '').strip()
             status = request.form.get('status', 'published').strip()
             published_date_str = request.form.get('published_date', '')
             category_names = request.form.getlist('categories')
@@ -465,6 +467,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             post.excerpt = excerpt
             post.author = author
             post.featured_image = featured_image
+            post.youtube_video_url = request.form.get('youtube_video_url', '').strip()
             post.status = status
             post.updated_at = datetime.now()
             
@@ -611,6 +614,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             'excerpt': post.excerpt or '',
             'author': post.author,
             'featured_image': post.featured_image or '',
+            'youtube_video_url': post.youtube_video_url or '',
             'status': post.status,
             'published_date': post.published_date.strftime('%Y-%m-%d') if post.published_date else today_date
         }
@@ -669,6 +673,31 @@ def register_seo_admin_routes(app, db, Post, Category):
             pass  # Table doesn't exist yet
         
         return render_template('admin/seo_posts.html', posts=posts, seo_scores=seo_scores)
+    
+    @app.route('/admin/seo/posts/<int:post_id>/toggle-status', methods=['POST'])
+    @login_required
+    def admin_seo_toggle_post_status(post_id):
+        """Toggle post status between draft and published"""
+        post = Post.query.get_or_404(post_id)
+        
+        try:
+            if post.status == 'draft':
+                post.status = 'published'
+                # Set published date if not set
+                if not post.published_date:
+                    post.published_date = datetime.now()
+                flash(f'Post "{post.title}" published successfully!', 'success')
+            else:
+                post.status = 'draft'
+                flash(f'Post "{post.title}" moved to draft.', 'info')
+            
+            post.updated_at = datetime.now()
+            db.session.commit()
+        except Exception as e:
+            flash(f'Error updating post status: {str(e)}', 'error')
+            db.session.rollback()
+        
+        return redirect(url_for('admin_seo_posts'))
     
     @app.route('/admin/seo/posts/<int:post_id>/delete', methods=['POST'])
     @login_required

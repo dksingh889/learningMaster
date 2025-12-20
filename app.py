@@ -94,6 +94,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     excerpt = db.Column(db.Text)  # Short summary/excerpt
     featured_image = db.Column(db.String(500))  # Featured image URL
+    youtube_video_url = db.Column(db.String(500))  # YouTube video URL for embedding
     published_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     author = db.Column(db.String(200), default='Admin')
     url = db.Column(db.String(500))
@@ -405,9 +406,17 @@ def api_newsletter():
 
 
 @app.template_filter('process_content')
-def process_content_filter(content):
-    """Template filter to process blog content"""
-    return process_blog_content(content)
+def process_content_filter(content, youtube_url=None):
+    """Template filter to process blog content and optionally insert YouTube video"""
+    from utils import insert_youtube_video_in_content, process_blog_content
+    
+    processed = process_blog_content(content)
+    
+    # If YouTube URL is provided, insert video after second H2/H3
+    if youtube_url:
+        return insert_youtube_video_in_content(processed, youtube_url)
+    
+    return processed
 
 
 @app.template_filter('regex_search')
@@ -416,6 +425,13 @@ def regex_search_filter(text, pattern):
     import re
     match = re.search(pattern, text)
     return match.group(1) if match else None
+
+
+@app.template_filter('extract_youtube_video_id')
+def extract_youtube_video_id_filter(url):
+    """Extract YouTube video ID from URL"""
+    from utils import extract_youtube_video_id
+    return extract_youtube_video_id(url)
 
 
 

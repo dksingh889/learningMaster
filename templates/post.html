@@ -129,7 +129,7 @@
             <!-- Post Content -->
             <div class="post-content-main">
                 <div class="post-content-article">
-                    {{ post.content | process_content | safe }}
+                    {{ post.content | process_content(post.youtube_video_url) | safe }}
                 </div>
             </div>
             

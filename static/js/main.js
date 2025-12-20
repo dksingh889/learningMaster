@@ -55,11 +55,29 @@
                 menuToggle.classList.toggle('active');
             });
             
+            // Handle mobile dropdown toggles (Categories)
+            const dropdownToggles = headerNav.querySelectorAll('.nav-dropdown > .nav-link');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    // Only prevent default on mobile
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const dropdown = this.parentElement;
+                        dropdown.classList.toggle('active');
+                    }
+                });
+            });
+            
             // Close menu when clicking outside
             document.addEventListener('click', function(e) {
                 if (!headerNav.contains(e.target) && !menuToggle.contains(e.target)) {
                     headerNav.classList.remove('active');
                     menuToggle.classList.remove('active');
+                    // Close all dropdowns
+                    headerNav.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+                        dropdown.classList.remove('active');
+                    });
                 }
             });
         }

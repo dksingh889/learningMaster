@@ -81,6 +81,14 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="youtube_video_url">YouTube Video URL (Optional)</label>
+                    <input type="text" id="youtube_video_url" name="youtube_video_url" 
+                           value="{{ form_data.youtube_video_url if form_data else '' }}" 
+                           placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID">
+                    <small style="color: #6b7280; font-size: 0.85rem;">Video will be embedded at the end of the post content</small>
+                </div>
+                
+                <div class="form-group">
                     <label>Categories</label>
                     <div class="checkbox-group">
                         {% for category in categories %}
@@ -931,8 +939,8 @@ async function regenerateAIPost() {
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
             <select id="ai-regenerate-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
-                <option value="openai">OpenAI (GPT-4o-mini)</option>
-                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI (GPT-4o) - Best Quality</option>
+                <option value="anthropic">Anthropic (Claude 3.5 Sonnet) - Best Quality</option>
             </select>
         </div>
         

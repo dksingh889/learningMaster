@@ -1,117 +1,145 @@
 """
-Utility functions for content processing
+Utility functions for blog content processing
 """
-import html
 import re
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-
+from urllib.parse import urlparse, parse_qs
 
 def process_blog_content(content):
     """
-    Process blog content to fix:
-    - HTML entities
-    - Image URLs
-    - Links
-    - Code formatting
+    Process blog content - can add formatting, link processing, etc.
+    Currently returns content as-is but can be extended.
     """
     if not content:
         return ""
     
-    # Decode HTML entities
-    content = html.unescape(content)
+    # Basic processing - can be extended
+    return content
+
+
+def extract_youtube_video_id(url):
+    """
+    Extract YouTube video ID from various YouTube URL formats.
     
-    # Parse with BeautifulSoup
-    soup = BeautifulSoup(content, 'html.parser')
+    Supports:
+    - https://www.youtube.com/watch?v=VIDEO_ID
+    - https://youtu.be/VIDEO_ID
+    - https://www.youtube.com/embed/VIDEO_ID
+    - https://m.youtube.com/watch?v=VIDEO_ID
     
-    # Fix image URLs - ensure they're absolute and working
-    for img in soup.find_all('img'):
-        src = img.get('src', '')
-        if src:
-            # If it's a local upload, keep it as relative path
-            if src.startswith('/static/uploads/') or src.startswith('static/uploads/'):
-                # Ensure it starts with /static/uploads/
-                if src.startswith('static/'):
-                    img['src'] = '/' + src
-                else:
-                    img['src'] = src
-            # If it's a Blogger CDN URL, keep it as is
-            elif 'blogger.googleusercontent.com' in src:
-                # Ensure full URL
-                if not src.startswith('http'):
-                    img['src'] = 'https:' + src if src.startswith('//') else src
-            else:
-                # Make relative URLs absolute
-                if not src.startswith('http'):
-                    img['src'] = urljoin('http://192.168.1.51:5000/', src)
-            
-            # Add responsive classes and styling
-            img['class'] = img.get('class', []) + ['blog-image']
-            img['loading'] = 'lazy'
-            img['style'] = 'max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0;'
+    Returns video ID or None if invalid URL.
+    """
+    if not url:
+        return None
     
-    # Fix links - ensure they open in new tab and are absolute
-    for link in soup.find_all('a'):
-        href = link.get('href', '')
-        if href:
-            # Make relative URLs absolute
-            if href.startswith('/') or (not href.startswith('http') and not href.startswith('#')):
-                link['href'] = urljoin('http://192.168.1.51:5000/', href)
-            
-            # Add target and rel for external links
-            if href.startswith('http') and 'http://192.168.1.51:5000/' not in href:
-                link['target'] = '_blank'
-                link['rel'] = 'noopener noreferrer'
+    # Remove whitespace
+    url = url.strip()
     
-    # Improve code blocks
-    for pre in soup.find_all('pre'):
-        pre['class'] = pre.get('class', []) + ['code-block', 'language-javascript']
-        # Wrap code tags inside pre if not already present
-        if not pre.find('code'):
-            code_tag = soup.new_tag('code')
-            code_tag.string = pre.get_text()
-            pre.clear()
-            pre.append(code_tag)
+    # Pattern for standard YouTube URLs
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def get_youtube_embed_url(url):
+    """
+    Convert YouTube URL to embed URL.
+    
+    Returns embed URL or None if invalid.
+    """
+    video_id = extract_youtube_video_id(url)
+    if video_id:
+        return f"https://www.youtube.com/embed/{video_id}"
+    return None
+
+
+def insert_youtube_video_in_content(content, youtube_url):
+    """
+    Insert YouTube video embed after the second H2 heading (and its content), 
+    or after the second H3 if no second H2 exists.
+    
+    The video is placed after the header's content but before the next header starts.
+    
+    Args:
+        content: HTML content string
+        youtube_url: YouTube video URL
+    
+    Returns:
+        HTML content with video embed inserted
+    """
+    if not youtube_url or not content:
+        return content
+    
+    video_id = extract_youtube_video_id(youtube_url)
+    if not video_id:
+        return content
+    
+    # Create the video embed HTML
+    video_html = f'''
+<div class="youtube-video-container" style="margin: 3rem 0; max-width: 100%;">
+    <div class="youtube-video-wrapper" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <iframe 
+            src="https://www.youtube.com/embed/{video_id}" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+        </iframe>
+    </div>
+</div>'''
+    
+    # Strategy 1: Find second H2 heading
+    h2_pattern = r'</h2>'
+    h2_matches = list(re.finditer(h2_pattern, content, re.IGNORECASE))
+    
+    if len(h2_matches) >= 2:
+        # We have at least 2 H2 headings
+        second_h2_end = h2_matches[1].end()
         
-        # Detect language from content
-        code_text = pre.get_text().lower()
-        if 'php' in code_text or '<?php' in code_text:
-            pre['class'] = [c for c in pre.get('class', []) if not c.startswith('language-')] + ['language-php']
-        elif 'python' in code_text or 'import ' in code_text or 'def ' in code_text:
-            pre['class'] = [c for c in pre.get('class', []) if not c.startswith('language-')] + ['language-python']
-        elif 'javascript' in code_text or 'function' in code_text or 'var ' in code_text:
-            pre['class'] = [c for c in pre.get('class', []) if not c.startswith('language-')] + ['language-javascript']
-        elif 'html' in code_text or '<!DOCTYPE' in code_text or '<html' in code_text:
-            pre['class'] = [c for c in pre.get('class', []) if not c.startswith('language-')] + ['language-html']
-        elif 'css' in code_text or '{' in code_text and ':' in code_text:
-            pre['class'] = [c for c in pre.get('class', []) if not c.startswith('language-')] + ['language-css']
+        # Find the next header (H1-H6) after the second H2
+        next_header_pattern = r'<(h[1-6])(?:\s[^>]*)?>'
+        next_header_match = re.search(next_header_pattern, content[second_h2_end:], re.IGNORECASE)
+        
+        if next_header_match:
+            # Insert before the next header
+            insert_position = second_h2_end + next_header_match.start()
+            # Skip any whitespace before the header
+            while insert_position > second_h2_end and content[insert_position - 1] in ' \n\r\t':
+                insert_position -= 1
+            return content[:insert_position] + video_html + content[insert_position:]
+        else:
+            # No next header found, insert at the end of content after second H2
+            return content[:second_h2_end] + video_html + content[second_h2_end:]
     
-    # Improve headings styling
-    for heading in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-        heading['class'] = heading.get('class', []) + ['content-heading']
+    # Strategy 2: If no second H2, try second H3 heading
+    h3_pattern = r'</h3>'
+    h3_matches = list(re.finditer(h3_pattern, content, re.IGNORECASE))
     
-    # Clean up empty divs and paragraphs
-    for tag in soup.find_all(['div', 'p']):
-        if not tag.get_text(strip=True) and not tag.find_all(['img', 'iframe', 'video']):
-            tag.decompose()
+    if len(h3_matches) >= 2:
+        # We have at least 2 H3 headings
+        second_h3_end = h3_matches[1].end()
+        
+        # Find the next header (H1-H6) after the second H3
+        next_header_pattern = r'<(h[1-6])(?:\s[^>]*)?>'
+        next_header_match = re.search(next_header_pattern, content[second_h3_end:], re.IGNORECASE)
+        
+        if next_header_match:
+            # Insert before the next header
+            insert_position = second_h3_end + next_header_match.start()
+            # Skip any whitespace before the header
+            while insert_position > second_h3_end and content[insert_position - 1] in ' \n\r\t':
+                insert_position -= 1
+            return content[:insert_position] + video_html + content[insert_position:]
+        else:
+            # No next header found, insert at the end of content after second H3
+            return content[:second_h3_end] + video_html + content[second_h3_end:]
     
-    # Remove Blogger-specific attributes
-    for tag in soup.find_all(True):
-        # Remove Blogger-specific attributes
-        for attr in ['dir', 'trbidi', 'imageanchor', 'data-original-height', 'data-original-width']:
-            if attr in tag.attrs:
-                del tag.attrs[attr]
-    
-    return str(soup)
-
-
-def clean_text(text):
-    """Clean and normalize text"""
-    if not text:
-        return ""
-    # Decode HTML entities
-    text = html.unescape(text)
-    # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
-
+    # Fallback: If no second H2 or H3, insert at the end
+    return content + video_html
