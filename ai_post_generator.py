@@ -219,6 +219,15 @@ Format your response as JSON with these keys:
 - og_title
 - og_description
 
+CODE BLOCK FORMATTING (CRITICAL):
+- All code examples MUST use this exact format: <pre><code class="language-python">your code here</code></pre>
+- For Python code, use: class="language-python"
+- For JavaScript code, use: class="language-javascript"
+- For Bash/Shell code, use: class="language-bash"
+- For other languages, use the appropriate language class (e.g., language-html, language-css, language-sql)
+- NEVER use plain <pre> or <code> tags without the language class
+- NEVER use markdown code blocks (```) in the HTML content
+
 CRITICAL: The content MUST be exactly 900-1000 words. Count the words in your content before responding. Make the content informative, well-researched, and SEO-optimized."""
         
         data = {
@@ -330,6 +339,15 @@ Format your response as JSON with these keys:
 - categories (comma-separated string)
 - og_title
 - og_description
+
+CODE BLOCK FORMATTING (CRITICAL):
+- All code examples MUST use this exact format: <pre><code class="language-python">your code here</code></pre>
+- For Python code, use: class="language-python"
+- For JavaScript code, use: class="language-javascript"
+- For Bash/Shell code, use: class="language-bash"
+- For other languages, use the appropriate language class (e.g., language-html, language-css, language-sql)
+- NEVER use plain <pre> or <code> tags without the language class
+- NEVER use markdown code blocks (```) in the HTML content
 
 CRITICAL: The content MUST be exactly 900-1000 words. Count the words in your content before responding. Make the content informative, well-researched, and SEO-optimized."""
         

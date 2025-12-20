@@ -15,18 +15,20 @@
             {% for post in posts.items %}
             <article class="post-card">
                 <div class="post-card-image">
-                    {% if post.featured_image %}
-                    <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy">
-                    {% else %}
-                    {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
-                    {% if first_image %}
-                    <img src="{{ first_image }}" alt="{{ post.title }}" loading="lazy">
-                    {% else %}
-                    <div class="post-card-placeholder">
-                        <span class="placeholder-icon">📝</span>
-                    </div>
-                    {% endif %}
-                    {% endif %}
+                    <a href="{{ url_for('post_detail', slug=post.slug) }}" class="post-card-image-link">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
+                        {% if first_image %}
+                        <img src="{{ first_image }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <div class="post-card-placeholder">
+                            <span class="placeholder-icon">📝</span>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </a>
                     <div class="post-card-category">
                         <a href="{{ url_for('category_posts', slug=category.slug) }}" class="category-badge">
                             {{ category.name }}

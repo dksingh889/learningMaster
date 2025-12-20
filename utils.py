@@ -16,6 +16,74 @@ def process_blog_content(content):
     return content
 
 
+def extract_searchable_content(content):
+    """
+    Extract searchable content from post body, excluding FAQ sections and everything below them,
+    internal linking sections, footer-like content, and other non-main content sections.
+    
+    Args:
+        content: Full HTML content of the post
+        
+    Returns:
+        Clean text content suitable for searching (only main content, no FAQ or footer sections)
+    """
+    if not content:
+        return ""
+    
+    # First, find and remove everything from FAQ section onwards
+    # FAQ sections typically start with headings like "FAQ", "Frequently Asked Questions", etc.
+    faq_patterns = [
+        r'(<h[2-6][^>]*>.*?[Ff][Aa][Qq].*?</h[2-6]>).*$',  # FAQ heading
+        r'(<h[2-6][^>]*>.*?[Ff]requently\s+[Aa]sked.*?</h[2-6]>).*$',  # Frequently Asked Questions
+        r'(<h[2-6][^>]*>.*?[Qq]uestions?\s+[Aa]nd\s+[Aa]nswers?.*?</h[2-6]>).*$',  # Questions and Answers
+    ]
+    
+    cleaned_content = content
+    for pattern in faq_patterns:
+        match = re.search(pattern, cleaned_content, re.IGNORECASE | re.DOTALL)
+        if match:
+            # Remove everything from the FAQ heading onwards
+            cleaned_content = cleaned_content[:match.start()]
+            break
+    
+    # Also remove sections that contain internal linking suggestions
+    # These usually appear at the end of AI-generated posts
+    internal_link_patterns = [
+        r'<h[2-6][^>]*>.*?[Ii]nternal\s+[Ll]inking.*?</h[2-6]>.*$',
+        r'<h[2-6][^>]*>.*?[Ii]nternal\s+[Ll]ink.*?</h[2-6]>.*$',
+        r'<h[2-6][^>]*>.*?[Rr]elated\s+[Aa]rticles.*?</h[2-6]>.*$',
+        r'<h[2-6][^>]*>.*?[Ss]ee\s+[Aa]lso.*?</h[2-6]>.*$',
+        r'[Ii]nternal\s+[Ll]inking\s+[Ss]uggestions.*$',
+        r'[Ii]nternal\s+[Ll]ink\s+[Ss]uggestions.*$',
+    ]
+    
+    for pattern in internal_link_patterns:
+        match = re.search(pattern, cleaned_content, re.IGNORECASE | re.DOTALL)
+        if match:
+            # Remove everything from the internal linking section onwards
+            cleaned_content = cleaned_content[:match.start()]
+            break
+    
+    # Remove HTML tags to get plain text
+    text = re.sub(r'<[^>]+>', ' ', cleaned_content)
+    
+    # Remove common footer-like patterns in plain text
+    text_patterns_to_remove = [
+        r'Anchor\s+texts?.*$',
+        r'Target\s+slug.*$',
+        r'Related\s+articles?.*$',
+        r'See\s+also.*$',
+    ]
+    
+    for pattern in text_patterns_to_remove:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+    
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
+
+
 def extract_youtube_video_id(url):
     """
     Extract YouTube video ID from various YouTube URL formats.

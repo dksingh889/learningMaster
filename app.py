@@ -1,12 +1,12 @@
 """
 Flask blog application - Google AdSense Ready
 """
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 import json
-from utils import process_blog_content
+from utils import process_blog_content, extract_searchable_content
 from urllib.parse import urljoin, quote_plus
 
 # Load environment variables from .env file if it exists
@@ -186,26 +186,139 @@ def category_posts(slug):
 
 @app.route('/search')
 def search():
-    """Search posts"""
-    query = request.args.get('q', '')
+    """Search posts - shows all posts if no query, or search results if query provided"""
+    query = request.args.get('q', '').strip()
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
+    # Filter only published posts
+    base_query = Post.query.filter_by(status='published')
+    
     if query:
-        posts = Post.query.filter(
-            db.or_(
-                Post.title.contains(query),
-                Post.content.contains(query)
-            )
-        ).order_by(Post.published_date.desc()).paginate(
+        # Search in title, excerpt, and content body
+        # Use extract_searchable_content to exclude internal linking sections and footer-like content
+        # We need to search in the database, so we'll filter posts and then check searchable content
+        all_posts = base_query.all()
+        matching_posts = []
+        
+        for post in all_posts:
+            # Check title
+            if query.lower() in post.title.lower():
+                matching_posts.append(post.id)
+                continue
+            
+            # Check excerpt
+            if post.excerpt and query.lower() in post.excerpt.lower():
+                matching_posts.append(post.id)
+                continue
+            
+            # Check searchable content (excluding internal links/footer sections)
+            searchable_content = extract_searchable_content(post.content)
+            if query.lower() in searchable_content.lower():
+                matching_posts.append(post.id)
+        
+        # Query posts by IDs
+        posts = base_query.filter(Post.id.in_(matching_posts)).order_by(
+            Post.published_date.desc()
+        ).paginate(
             page=page, per_page=per_page, error_out=False
         )
     else:
-        posts = Post.query.order_by(Post.published_date.desc()).paginate(
+        # Show all published posts when no query
+        posts = base_query.order_by(Post.published_date.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
     
     return render_template('search.html', posts=posts, query=query)
+
+
+@app.route('/api/search')
+def api_search():
+    """API endpoint for loading more posts via AJAX (infinite scroll)"""
+    query = request.args.get('q', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    # Filter only published posts
+    base_query = Post.query.filter_by(status='published')
+    
+    if query:
+        # Search in title, excerpt, and content body
+        # Use extract_searchable_content to exclude internal linking sections and footer-like content
+        all_posts = base_query.all()
+        matching_post_ids = []
+        query_lower = query.lower()
+        
+        for post in all_posts:
+            # Check title
+            if query_lower in post.title.lower():
+                matching_post_ids.append(post.id)
+                continue
+            
+            # Check excerpt
+            if post.excerpt and query_lower in post.excerpt.lower():
+                matching_post_ids.append(post.id)
+                continue
+            
+            # Check searchable content (excluding internal links/footer sections)
+            searchable_content = extract_searchable_content(post.content)
+            if query_lower in searchable_content.lower():
+                matching_post_ids.append(post.id)
+        
+        # Query posts by IDs (handle empty list case)
+        if matching_post_ids:
+            posts_query = base_query.filter(Post.id.in_(matching_post_ids)).order_by(
+                Post.published_date.desc()
+            )
+        else:
+            # No matches found - return empty query
+            posts_query = base_query.filter(Post.id == -1)
+    else:
+        posts_query = base_query.order_by(Post.published_date.desc())
+    
+    posts = posts_query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Convert posts to JSON
+    posts_data = []
+    for post in posts.items:
+        # Get first image
+        first_image = None
+        if post.featured_image:
+            first_image = post.featured_image
+        else:
+            import re
+            from utils import process_blog_content
+            content = process_blog_content(post.content)
+            img_match = re.search(r'src="([^"]+)"', content)
+            if img_match:
+                first_image = img_match.group(1)
+        
+        # Get first category
+        first_category = post.categories.first() if post.categories else None
+        
+        posts_data.append({
+            'id': post.id,
+            'title': post.title,
+            'slug': post.slug,
+            'excerpt': (post.content[:150] + '...') if len(post.content) > 150 else post.content,
+            'featured_image': first_image,
+            'category': first_category.name if first_category else None,
+            'category_slug': first_category.slug if first_category else None,
+            'author': post.author,
+            'published_date': post.published_date.strftime('%B %d, %Y') if post.published_date else '',
+            'url': url_for('post_detail', slug=post.slug)
+        })
+    
+    return jsonify({
+        'posts': posts_data,
+        'has_next': posts.has_next,
+        'next_page': posts.next_num if posts.has_next else None,
+        'current_page': posts.page,
+        'total_pages': posts.pages,
+        'total': posts.total
+    })
 
 
 @app.route('/about')

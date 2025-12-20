@@ -1,46 +1,71 @@
 {% extends "base.html" %}
 
-{% block title %}Search{% if query %}: {{ query }}{% endif %} - Learning Master{% endblock %}
+{% block title %}{% if query %}Search: {{ query }}{% else %}All Articles{% endif %} - Learning Master{% endblock %}
 
 {% block content %}
 <section class="posts-section">
     <div class="section-container">
+        {% if query %}
         <div class="section-header">
             <h1 class="section-title">
-                {% if query %}
                 Search Results for: "{{ query }}"
-                {% else %}
-                Search Posts
-                {% endif %}
             </h1>
             <p class="section-subtitle">
-                {% if query and posts.items %}
+                {% if posts.items %}
                 Found {{ posts.total }} result{{ 's' if posts.total != 1 else '' }}
-                {% elif query %}
-                No results found
                 {% else %}
-                Enter a search term to find posts
+                No results found
                 {% endif %}
             </p>
         </div>
+        {% endif %}
         
-        {% if query and posts.items %}
-        <div class="posts-grid">
+        <!-- Search Bar on Search Page -->
+        <div class="search-page-form-wrapper" style="max-width: 600px; margin: 0 auto 3rem auto;">
+            <form class="search-page-form" action="{{ url_for('search') }}" method="get" style="display: flex; gap: 0.5rem; align-items: center; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: var(--radius-full); padding: 0.5rem 1rem; transition: all var(--transition-fast);">
+                <input 
+                    type="text" 
+                    name="q" 
+                    placeholder="Search articles..." 
+                    value="{{ query }}" 
+                    class="search-page-input" 
+                    id="search-page-input"
+                    style="flex: 1; border: none; background: transparent; color: var(--text-primary); font-size: 1rem; outline: none; padding: 0.5rem 0;"
+                    autocomplete="off"
+                >
+                <button 
+                    type="submit" 
+                    class="search-page-button" 
+                    aria-label="Search"
+                    style="background: var(--color-primary); color: var(--text-inverse); border: none; border-radius: var(--radius-full); padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+        
+        {% if posts.items %}
+        <div class="posts-grid" id="posts-container">
             {% for post in posts.items %}
             <article class="post-card">
                 <div class="post-card-image">
-                    {% if post.featured_image %}
-                    <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy">
-                    {% else %}
-                    {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
-                    {% if first_image %}
-                    <img src="{{ first_image }}" alt="{{ post.title }}" loading="lazy">
-                    {% else %}
-                    <div class="post-card-placeholder">
-                        <span class="placeholder-icon">📝</span>
-                    </div>
-                    {% endif %}
-                    {% endif %}
+                    <a href="{{ url_for('post_detail', slug=post.slug) }}" class="post-card-image-link">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        {% set first_image = post.content | process_content | regex_search('src="([^"]+)"') %}
+                        {% if first_image %}
+                        <img src="{{ first_image }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <div class="post-card-placeholder">
+                            <span class="placeholder-icon">📝</span>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </a>
                     {% set first_category = post.categories.first() %}
                     {% if first_category %}
                     <div class="post-card-category">
@@ -80,43 +105,18 @@
             {% endfor %}
         </div>
         
-        {% if posts.pages > 1 %}
-        <div class="pagination-wrapper">
-            <nav class="pagination" aria-label="Pagination">
-                {% if posts.has_prev %}
-                <a href="{{ url_for('search', q=query, page=posts.prev_num) }}" class="pagination-link pagination-prev">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    Previous
-                </a>
-                {% endif %}
-                
-                <div class="pagination-pages">
-                    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                        {% if page_num %}
-                            {% if page_num == posts.page %}
-                            <span class="pagination-page pagination-current">{{ page_num }}</span>
-                            {% else %}
-                            <a href="{{ url_for('search', q=query, page=page_num) }}" class="pagination-page">{{ page_num }}</a>
-                            {% endif %}
-                        {% else %}
-                            <span class="pagination-ellipsis">…</span>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                
-                {% if posts.has_next %}
-                <a href="{{ url_for('search', q=query, page=posts.next_num) }}" class="pagination-link pagination-next">
-                    Next
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </a>
-                {% endif %}
-            </nav>
+        <!-- Load More Indicator -->
+        <div id="load-more-indicator" style="text-align: center; padding: 2rem; display: none;">
+            <div style="display: inline-block; padding: 1rem 2rem; background: var(--bg-secondary); border-radius: 8px; color: var(--text-secondary);">
+                <span style="display: inline-block; width: 20px; height: 20px; border: 3px solid var(--border-color); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem;"></span>
+                Loading more articles...
+            </div>
         </div>
-        {% endif %}
+        
+        <!-- End of Results Message -->
+        <div id="end-of-results" style="text-align: center; padding: 2rem; display: none; color: var(--text-secondary);">
+            <p>You've reached the end! 🎉</p>
+        </div>
         
         {% elif query %}
         <div class="empty-state">
@@ -126,11 +126,238 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <div class="empty-state-icon">🔍</div>
-            <h3 class="empty-state-title">Search Posts</h3>
-            <p class="empty-state-text">Use the search bar in the header to find articles</p>
+            <div class="empty-state-icon">📚</div>
+            <h3 class="empty-state-title">No articles available</h3>
+            <p class="empty-state-text">Check back soon for new articles and tutorials!</p>
         </div>
         {% endif %}
     </div>
 </section>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.search-page-form-wrapper {
+    max-width: 600px;
+    margin: 0 auto 3rem auto;
+}
+
+.search-page-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 0.5rem 1rem;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.search-page-form:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-page-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    padding: 0.5rem 0;
+}
+
+.search-page-input::placeholder {
+    color: var(--text-light);
+}
+
+.search-page-button {
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    min-width: 44px;
+    height: 44px;
+}
+
+.search-page-button:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .search-page-form-wrapper {
+        margin: 0 auto 2rem auto;
+        padding: 0 var(--spacing-md);
+    }
+    
+    .search-page-form {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .search-page-input {
+        font-size: 0.9375rem;
+    }
+}
+</style>
+
+<script>
+(function() {
+    const postsContainer = document.getElementById('posts-container');
+    const loadMoreIndicator = document.getElementById('load-more-indicator');
+    const endOfResults = document.getElementById('end-of-results');
+    
+    if (!postsContainer) return;
+    
+    let currentPage = {{ posts.page }};
+    const totalPages = {{ posts.pages }};
+    let hasNext = {{ 'true' if posts.has_next else 'false' }};
+    const query = {{ ('"' + query + '"') if query else '""' }};
+    let isLoading = false;
+    
+    // Show load more indicator if there are more pages
+    if (hasNext && loadMoreIndicator) {
+        loadMoreIndicator.style.display = 'block';
+    } else if (currentPage > 1 && endOfResults) {
+        endOfResults.style.display = 'block';
+    }
+    
+    // Function to load more posts
+    function loadMorePosts() {
+        if (isLoading || !hasNext) return;
+        
+        isLoading = true;
+        currentPage++;
+        
+        if (loadMoreIndicator) {
+            loadMoreIndicator.style.display = 'block';
+        }
+        
+        const url = `/api/search?page=${currentPage}${query ? '&q=' + encodeURIComponent(query) : ''}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.posts && data.posts.length > 0) {
+                    // Append new posts to container
+                    data.posts.forEach(post => {
+                        const postCard = createPostCard(post);
+                        postsContainer.appendChild(postCard);
+                    });
+                    
+                    // Update hasNext
+                    hasNext = data.has_next;
+                    if (data.has_next) {
+                        if (loadMoreIndicator) loadMoreIndicator.style.display = 'block';
+                        // Re-observe if observer exists
+                        if (observer && loadMoreIndicator) {
+                            observer.observe(loadMoreIndicator);
+                        }
+                    } else {
+                        if (loadMoreIndicator) loadMoreIndicator.style.display = 'none';
+                        if (endOfResults) endOfResults.style.display = 'block';
+                        // Stop observing when no more posts
+                        if (observer && loadMoreIndicator) {
+                            observer.unobserve(loadMoreIndicator);
+                        }
+                    }
+                } else {
+                    hasNext = false;
+                    if (loadMoreIndicator) loadMoreIndicator.style.display = 'none';
+                    if (endOfResults) endOfResults.style.display = 'block';
+                    // Stop observing when no more posts
+                    if (observer && loadMoreIndicator) {
+                        observer.unobserve(loadMoreIndicator);
+                    }
+                }
+                isLoading = false;
+            })
+            .catch(error => {
+                console.error('Error loading more posts:', error);
+                isLoading = false;
+                hasNext = false;
+                if (loadMoreIndicator) loadMoreIndicator.style.display = 'none';
+            });
+    }
+    
+    // Function to create post card HTML
+    function createPostCard(post) {
+        const article = document.createElement('article');
+        article.className = 'post-card';
+        
+        const imageHtml = post.featured_image 
+            ? `<img src="${escapeHtml(post.featured_image)}" alt="${escapeHtml(post.title)}" loading="lazy">`
+            : `<div class="post-card-placeholder"><span class="placeholder-icon">📝</span></div>`;
+        
+        const categoryHtml = post.category
+            ? `<div class="post-card-category">
+                <a href="/category/${escapeHtml(post.category_slug)}" class="category-badge">${escapeHtml(post.category)}</a>
+               </div>`
+            : '';
+        
+        const excerpt = escapeHtml(post.excerpt.replace(/<[^>]*>/g, '').substring(0, 150));
+        
+        article.innerHTML = `
+            <div class="post-card-image">
+                <a href="${escapeHtml(post.url)}" class="post-card-image-link">
+                    ${imageHtml}
+                </a>
+                ${categoryHtml}
+            </div>
+            <div class="post-card-content">
+                <div class="post-card-meta">
+                    <time datetime="${post.published_date}" class="post-date">${escapeHtml(post.published_date)}</time>
+                    <span class="post-author">by ${escapeHtml(post.author)}</span>
+                </div>
+                <h3 class="post-card-title">
+                    <a href="${escapeHtml(post.url)}">${escapeHtml(post.title)}</a>
+                </h3>
+                <p class="post-card-excerpt">${excerpt}...</p>
+                <div class="post-card-footer">
+                    <a href="${escapeHtml(post.url)}" class="read-more-link">
+                        Read more
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        return article;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Intersection Observer for infinite scroll
+    let observer = null;
+    if (loadMoreIndicator && hasNext) {
+        observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && hasNext && !isLoading) {
+                    loadMorePosts();
+                }
+            });
+        }, {
+            rootMargin: '200px' // Start loading 200px before reaching the bottom
+        });
+        
+        observer.observe(loadMoreIndicator);
+    }
+})();
+</script>
 {% endblock %}
