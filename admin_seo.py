@@ -155,6 +155,7 @@ def register_seo_admin_routes(app, db, Post, Category):
             author = request.form.get('author', 'Admin').strip() or 'Admin'
             category_names = request.form.getlist('categories')
             featured_image = request.form.get('featured_image', '').strip()
+            youtube_video_url = request.form.get('youtube_video_url', '').strip()
             status = request.form.get('status', 'draft').strip()
             published_date_str = request.form.get('published_date', '')
             
@@ -347,7 +348,8 @@ def register_seo_admin_routes(app, db, Post, Category):
                     'excerpt': ai_data.get('excerpt', ''),
                     'author': 'Admin',
                     'status': 'draft',
-                    'published_date': today_date
+                    'published_date': today_date,
+                    'youtube_video_url': ai_data.get('youtube_video_url', '')
                 }
                 
                 # Pre-fill SEO data
