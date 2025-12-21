@@ -1001,6 +1001,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         try:
             data = request.get_json()
             topic = data.get('topic', '').strip()
+            custom_prompt = data.get('custom_prompt', '').strip()  # User's custom instructions
             provider = data.get('provider', 'openai')  # 'openai' or 'anthropic'
             api_key = data.get('api_key')  # Optional, uses env var if not provided
             post_id = data.get('post_id')  # Optional, for regenerating existing post
@@ -1011,8 +1012,8 @@ def register_seo_admin_routes(app, db, Post, Category):
             # Import AI post generator
             from ai_post_generator import generate_seo_post
             
-            # Generate content
-            generated_data = generate_seo_post(topic, api_key, provider)
+            # Generate content with custom prompt
+            generated_data = generate_seo_post(topic, api_key, provider, custom_prompt if custom_prompt else None)
             
             if generated_data:
                 # Store in session instead of URL to avoid 414 error
@@ -1045,6 +1046,7 @@ def register_seo_admin_routes(app, db, Post, Category):
         try:
             data = request.get_json()
             post_id = data.get('post_id')
+            custom_prompt = data.get('custom_prompt', '').strip()  # User's custom instructions
             provider = data.get('provider', 'openai')
             api_key = data.get('api_key')
             
@@ -1066,8 +1068,8 @@ def register_seo_admin_routes(app, db, Post, Category):
             # Import AI post generator
             from ai_post_generator import generate_seo_post
             
-            # Generate new content
-            generated_data = generate_seo_post(topic, api_key, provider)
+            # Generate new content with custom prompt
+            generated_data = generate_seo_post(topic, api_key, provider, custom_prompt if custom_prompt else None)
             
             if generated_data:
                 # Store in session instead of URL to avoid 414 error
@@ -1088,6 +1090,127 @@ def register_seo_admin_routes(app, db, Post, Category):
                     'message': 'Failed to regenerate content. Please check your API key'
                 }), 500
                 
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+    
+    @app.route('/admin/seo/api/analyze-content-quality', methods=['POST'])
+    @login_required
+    def api_analyze_content_quality():
+        """API endpoint to analyze content quality for human editing"""
+        try:
+            import re
+            from bs4 import BeautifulSoup
+            
+            data = request.get_json()
+            content = data.get('content', '').strip()
+            title = data.get('title', '').strip()
+            
+            if not content:
+                return jsonify({'success': False, 'message': 'Content is required'}), 400
+            
+            suggestions = []
+            metrics = {}
+            
+            # Parse HTML content
+            soup = BeautifulSoup(content, 'html.parser')
+            text_content = soup.get_text()
+            
+            # Calculate metrics
+            word_count = len(text_content.split())
+            sentences = re.split(r'[.!?]+', text_content)
+            sentences = [s.strip() for s in sentences if s.strip()]
+            
+            # Sentence length variety
+            sentence_lengths = [len(s.split()) for s in sentences]
+            if sentence_lengths:
+                avg_length = sum(sentence_lengths) / len(sentence_lengths)
+                min_length = min(sentence_lengths)
+                max_length = max(sentence_lengths)
+                variety_score = 'Good' if (max_length - min_length) > 10 else 'Needs Improvement'
+                metrics['sentence_variety'] = variety_score
+                
+                if variety_score == 'Needs Improvement':
+                    suggestions.append('Vary sentence lengths - mix short punchy sentences with longer, more complex ones')
+            
+            # Check for AI patterns
+            ai_patterns = [
+                (r'\b(in conclusion|furthermore|moreover|it is important to note)\b', 'Avoid repetitive transition phrases'),
+                (r'\b(this comprehensive guide|this article|this post)\b', 'Reduce generic references - be more specific'),
+                (r'\.\s+\.\s+\.', 'Remove excessive ellipses'),
+            ]
+            
+            for pattern, suggestion in ai_patterns:
+                if re.search(pattern, text_content, re.IGNORECASE):
+                    if suggestion not in suggestions:
+                        suggestions.append(suggestion)
+            
+            # Check for contractions (more human-like)
+            contractions = len(re.findall(r"\b\w+'\w+\b", text_content))
+            if contractions < 3 and word_count > 500:
+                suggestions.append('Add more contractions (don\'t, can\'t, it\'s) to sound more conversational')
+            
+            # Check paragraph length variety
+            paragraphs = [p.strip() for p in text_content.split('\n\n') if p.strip()]
+            if paragraphs:
+                para_lengths = [len(p.split()) for p in paragraphs]
+                if para_lengths:
+                    para_variety = max(para_lengths) - min(para_lengths)
+                    if para_variety < 20:
+                        suggestions.append('Vary paragraph lengths - some short (2-3 sentences), some longer (4-5 sentences)')
+            
+            # Check for personal pronouns (more human-like)
+            personal_pronouns = len(re.findall(r'\b(I|we|my|our|me|us)\b', text_content, re.IGNORECASE))
+            if personal_pronouns < 2 and word_count > 500:
+                suggestions.append('Consider adding personal touches like "I\'ve found" or "In my experience" to sound more human')
+            
+            # Check for specific examples vs generic
+            generic_phrases = [
+                'for example', 'such as', 'like this', 'as follows'
+            ]
+            generic_count = sum(1 for phrase in generic_phrases if phrase in text_content.lower())
+            if generic_count > 5:
+                suggestions.append('Replace generic examples with specific, real-world scenarios')
+            
+            # Readability score (simple Flesch-like)
+            if sentences:
+                avg_sentence_length = sum(sentence_lengths) / len(sentence_lengths)
+                avg_word_length = sum(len(word) for word in text_content.split()) / word_count if word_count > 0 else 0
+                readability = 'Good' if avg_sentence_length < 20 and avg_word_length < 5 else 'Needs Improvement'
+                metrics['readability'] = readability
+                
+                if readability == 'Needs Improvement':
+                    suggestions.append('Simplify some sentences - aim for average sentence length under 20 words')
+            
+            # Human-like score (0-10)
+            human_score = 7  # Base score
+            if variety_score == 'Good':
+                human_score += 1
+            if contractions >= 3:
+                human_score += 1
+            if personal_pronouns >= 2:
+                human_score += 1
+            if readability == 'Good':
+                human_score += 1
+            
+            # Deduct for AI patterns
+            ai_pattern_count = sum(1 for pattern, _ in ai_patterns if re.search(pattern, text_content, re.IGNORECASE))
+            human_score = max(0, min(10, human_score - (ai_pattern_count * 0.5)))
+            
+            metrics['human_score'] = round(human_score, 1)
+            
+            # Additional suggestions based on score
+            if human_score < 7:
+                suggestions.append('Add more personality and unique insights to make content less generic')
+                suggestions.append('Include real code examples or specific use cases you\'ve encountered')
+            
+            return jsonify({
+                'success': True,
+                'suggestions': suggestions[:8],  # Limit to 8 suggestions
+                'metrics': metrics
+            })
+            
         except Exception as e:
             import traceback
             traceback.print_exc()

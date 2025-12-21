@@ -149,7 +149,7 @@ Focus on keywords that are:
         return None
 
 
-def generate_ai_content_with_openai(topic: str, keyword_data: Optional[Dict] = None, api_key: Optional[str] = None) -> Optional[Dict]:
+def generate_ai_content_with_openai(topic: str, keyword_data: Optional[Dict] = None, api_key: Optional[str] = None, custom_prompt: Optional[str] = None) -> Optional[Dict]:
     """
     Generate AI content using OpenAI API.
     
@@ -181,30 +181,43 @@ def generate_ai_content_with_openai(topic: str, keyword_data: Optional[Dict] = N
         
         secondary_keywords_str = ', '.join(secondary_keywords) if isinstance(secondary_keywords, list) else (secondary_keywords if isinstance(secondary_keywords, str) else '')
         
-        # Create comprehensive prompt for SEO-optimized content
-        prompt = f"""Create a comprehensive, SEO-optimized blog post about "{topic}".
+        # Create comprehensive prompt for SEO-optimized, human-like content
+        prompt = f"""Create a comprehensive, SEO-optimized blog post about "{topic}" that reads like it was written by an experienced human expert, not AI.
 
 KEYWORD RESEARCH DATA:
 - Primary Keyword: {primary_keyword}
 - Secondary Keywords: {secondary_keywords_str}
 - Keyword Insights: {keyword_insights}
 
+WRITING STYLE (CRITICAL - TO SOUND HUMAN):
+1. Vary sentence structure: Mix short punchy sentences with longer, more complex ones. Avoid repetitive patterns.
+2. Use natural transitions: Use varied transition words (however, meanwhile, furthermore, on the other hand, in contrast, etc.) - don't always start paragraphs the same way.
+3. Add personality: Include occasional personal opinions, real-world examples, and conversational asides. Use "I've found that..." or "In my experience..." occasionally.
+4. Natural language patterns: Use contractions (don't, can't, it's) naturally. Include occasional colloquialisms and varied vocabulary.
+5. Avoid AI patterns: Don't use phrases like "In conclusion", "It's important to note", "Furthermore" at the start of every paragraph. Vary your approach.
+6. Real examples: Include specific, concrete examples rather than generic ones. Use real scenarios and practical applications.
+7. Imperfect perfection: Occasionally use slightly informal language, varied punctuation, and natural flow - not overly polished.
+
 SEO requirements (STRICT - MUST FOLLOW):
-1. Title: 50-60 characters, MUST include the primary keyword "{primary_keyword}" near the start.
-2. Meta Description: 150-160 characters, MUST include the primary keyword once naturally.
+1. Title: 50-60 characters, MUST include the primary keyword "{primary_keyword}" near the start. Make it compelling and click-worthy.
+2. Meta Description: 150-160 characters, MUST include the primary keyword once naturally. Make it engaging and action-oriented.
 3. Content: EXACTLY 900-1000 words (count carefully - this is critical). Include:
-   - An engaging introduction (100-150 words) that naturally states the primary keyword.
-   - At least 5-6 H2 headings; add H3s where useful for structure.
-   - Practical examples, steps, checklists, or case studies.
-   - A clear conclusion (100-150 words) with a call to action.
-   - A dedicated FAQ section (at least 4-5 FAQs) with questions in H3 and concise answers.
+   - An engaging, hook-driven introduction (100-150 words) that naturally states the primary keyword and draws readers in.
+   - At least 5-6 H2 headings with varied phrasing; add H3s where useful for structure.
+   - Practical, real-world examples, step-by-step guides, checklists, or case studies with specific details.
+   - A clear, actionable conclusion (100-150 words) with a natural call to action that doesn't sound robotic.
+   - A dedicated FAQ section (at least 4-5 FAQs) with questions in H3 and concise, helpful answers.
 4. Keyword usage: 
-   - Use primary keyword "{primary_keyword}" naturally 8-12 times throughout (1-1.5% density).
-   - Weave in secondary keywords: {secondary_keywords_str} naturally throughout the content.
-   - Avoid keyword stuffing - make it read naturally.
-5. Readability: Short paragraphs (2-4 sentences), bulleted/numbered lists where helpful.
+   - Use primary keyword "{primary_keyword}" naturally 8-12 times throughout (1-1.5% density) - vary placement (beginning, middle, end of sentences).
+   - Weave in secondary keywords: {secondary_keywords_str} naturally throughout the content in varied contexts.
+   - Avoid keyword stuffing - make it read naturally. Use synonyms and related terms.
+   - Include LSI (Latent Semantic Indexing) keywords naturally.
+5. Readability: 
+   - Vary paragraph length (some 2-3 sentences, some 4-5 sentences).
+   - Use bulleted/numbered lists where helpful, but not excessively.
+   - Break up text with subheadings, examples, and visual breaks.
 6. Internal linking suggestions: Add a short unordered list at the end with 3 anchor texts and target slug ideas (no full URLs).
-7. Excerpt: 150-200 characters summarizing the post, include primary keyword.
+7. Excerpt: 150-200 characters summarizing the post, include primary keyword naturally.
 8. Categories: Suggest 2-3 relevant categories.
 
 Format your response as JSON with these keys:
@@ -233,10 +246,10 @@ CRITICAL: The content MUST be exactly 900-1000 words. Count the words in your co
         data = {
             "model": "gpt-4o",  # Use best model for quality content
             "messages": [
-                {"role": "system", "content": "You are an expert SEO content writer specializing in long-form, keyword-optimized blog posts. Always respond with valid JSON only. You MUST ensure content is exactly 900-1000 words."},
+                {"role": "system", "content": "You are an experienced human blogger and SEO expert with years of writing experience. You write naturally, conversationally, and with personality - never sounding like AI. Your content is highly optimized for SEO but reads like a knowledgeable expert sharing insights. Always respond with valid JSON only. You MUST ensure content is exactly 900-1000 words and sounds completely human-written."},
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.7,
+            "temperature": 0.85,  # Higher temperature for more natural, varied writing
             "max_tokens": 8000  # Increased for longer content
         }
         
@@ -270,7 +283,7 @@ CRITICAL: The content MUST be exactly 900-1000 words. Count the words in your co
         return None
 
 
-def generate_ai_content_with_anthropic(topic: str, keyword_data: Optional[Dict] = None, api_key: Optional[str] = None) -> Optional[Dict]:
+def generate_ai_content_with_anthropic(topic: str, keyword_data: Optional[Dict] = None, api_key: Optional[str] = None, custom_prompt: Optional[str] = None) -> Optional[Dict]:
     """
     Generate AI content using Anthropic Claude API.
     
@@ -303,29 +316,42 @@ def generate_ai_content_with_anthropic(topic: str, keyword_data: Optional[Dict] 
         
         secondary_keywords_str = ', '.join(secondary_keywords) if isinstance(secondary_keywords, list) else (secondary_keywords if isinstance(secondary_keywords, str) else '')
         
-        prompt = f"""Create a comprehensive, SEO-optimized blog post about "{topic}".
+        prompt = f"""Create a comprehensive, SEO-optimized blog post about "{topic}" that reads like it was written by an experienced human expert, not AI.
 
 KEYWORD RESEARCH DATA:
 - Primary Keyword: {primary_keyword}
 - Secondary Keywords: {secondary_keywords_str}
 - Keyword Insights: {keyword_insights}
 
+WRITING STYLE (CRITICAL - TO SOUND HUMAN):
+1. Vary sentence structure: Mix short punchy sentences with longer, more complex ones. Avoid repetitive patterns.
+2. Use natural transitions: Use varied transition words (however, meanwhile, furthermore, on the other hand, in contrast, etc.) - don't always start paragraphs the same way.
+3. Add personality: Include occasional personal opinions, real-world examples, and conversational asides. Use "I've found that..." or "In my experience..." occasionally.
+4. Natural language patterns: Use contractions (don't, can't, it's) naturally. Include occasional colloquialisms and varied vocabulary.
+5. Avoid AI patterns: Don't use phrases like "In conclusion", "It's important to note", "Furthermore" at the start of every paragraph. Vary your approach.
+6. Real examples: Include specific, concrete examples rather than generic ones. Use real scenarios and practical applications.
+7. Imperfect perfection: Occasionally use slightly informal language, varied punctuation, and natural flow - not overly polished.
+
 SEO requirements (STRICT - MUST FOLLOW):
-1. Title: 50-60 characters, MUST include the primary keyword "{primary_keyword}" near the start.
-2. Meta Description: 150-160 characters, MUST include the primary keyword once naturally.
+1. Title: 50-60 characters, MUST include the primary keyword "{primary_keyword}" near the start. Make it compelling and click-worthy.
+2. Meta Description: 150-160 characters, MUST include the primary keyword once naturally. Make it engaging and action-oriented.
 3. Content: EXACTLY 900-1000 words (count carefully - this is critical). Include:
-   - An engaging introduction (100-150 words) that naturally states the primary keyword.
-   - At least 5-6 H2 headings; add H3s where useful for structure.
-   - Practical examples, steps, checklists, or case studies.
-   - A clear conclusion (100-150 words) with a call to action.
-   - A dedicated FAQ section (at least 4-5 FAQs) with questions in H3 and concise answers.
+   - An engaging, hook-driven introduction (100-150 words) that naturally states the primary keyword and draws readers in.
+   - At least 5-6 H2 headings with varied phrasing; add H3s where useful for structure.
+   - Practical, real-world examples, step-by-step guides, checklists, or case studies with specific details.
+   - A clear, actionable conclusion (100-150 words) with a natural call to action that doesn't sound robotic.
+   - A dedicated FAQ section (at least 4-5 FAQs) with questions in H3 and concise, helpful answers.
 4. Keyword usage: 
-   - Use primary keyword "{primary_keyword}" naturally 8-12 times throughout (1-1.5% density).
-   - Weave in secondary keywords: {secondary_keywords_str} naturally throughout the content.
-   - Avoid keyword stuffing - make it read naturally.
-5. Readability: Short paragraphs (2-4 sentences), bulleted/numbered lists where helpful.
+   - Use primary keyword "{primary_keyword}" naturally 8-12 times throughout (1-1.5% density) - vary placement (beginning, middle, end of sentences).
+   - Weave in secondary keywords: {secondary_keywords_str} naturally throughout the content in varied contexts.
+   - Avoid keyword stuffing - make it read naturally. Use synonyms and related terms.
+   - Include LSI (Latent Semantic Indexing) keywords naturally.
+5. Readability: 
+   - Vary paragraph length (some 2-3 sentences, some 4-5 sentences).
+   - Use bulleted/numbered lists where helpful, but not excessively.
+   - Break up text with subheadings, examples, and visual breaks.
 6. Internal linking suggestions: Add a short unordered list at the end with 3 anchor texts and target slug ideas (no full URLs).
-7. Excerpt: 150-200 characters summarizing the post, include primary keyword.
+7. Excerpt: 150-200 characters summarizing the post, include primary keyword naturally.
 8. Categories: Suggest 2-3 relevant categories.
 
 Format your response as JSON with these keys:
@@ -350,11 +376,20 @@ CODE BLOCK FORMATTING (CRITICAL):
 - NEVER use markdown code blocks (```) in the HTML content
 
 CRITICAL: The content MUST be exactly 900-1000 words. Count the words in your content before responding. Make the content informative, well-researched, and SEO-optimized."""
+
+        # Add user's custom prompt/instructions if provided
+        if custom_prompt and custom_prompt.strip():
+            prompt += f"""
+
+ADDITIONAL USER INSTRUCTIONS:
+{custom_prompt.strip()}
+
+Please incorporate these additional instructions while following all the requirements above."""
         
         data = {
             "model": "claude-3-5-sonnet-20241022",  # Best Claude model
             "max_tokens": 8000,  # Increased for longer content
-            "temperature": 0.7,
+            "temperature": 0.85,  # Higher temperature for more natural, varied writing
             "messages": [
                 {"role": "user", "content": prompt}
             ]
@@ -422,7 +457,7 @@ def parse_text_response(text: str, topic: str) -> Dict:
     }
 
 
-def generate_seo_post(topic: str, api_key: Optional[str] = None, provider: str = 'openai') -> Optional[Dict]:
+def generate_seo_post(topic: str, api_key: Optional[str] = None, provider: str = 'openai', custom_prompt: Optional[str] = None) -> Optional[Dict]:
     """
     Generate SEO-optimized blog post content with keyword research.
     
@@ -430,6 +465,7 @@ def generate_seo_post(topic: str, api_key: Optional[str] = None, provider: str =
         topic: The topic to generate content about
         api_key: API key (optional, uses env var if not provided)
         provider: 'openai' or 'anthropic'
+        custom_prompt: Optional custom instructions from user to be included in the prompt
         
     Returns:
         Dictionary with all post fields including SEO data
@@ -459,11 +495,13 @@ def generate_seo_post(topic: str, api_key: Optional[str] = None, provider: str =
     
     # Step 2: Generate content with researched keywords
     print(f"🤖 Generating AI content (900-1000 words) for topic: '{topic}'...")
+    if custom_prompt:
+        print(f"📝 Including custom user instructions in prompt...")
     
     if provider == 'openai':
-        result = generate_ai_content_with_openai(topic, keyword_data, api_key)
+        result = generate_ai_content_with_openai(topic, keyword_data, api_key, custom_prompt)
     elif provider == 'anthropic':
-        result = generate_ai_content_with_anthropic(topic, keyword_data, api_key)
+        result = generate_ai_content_with_anthropic(topic, keyword_data, api_key, custom_prompt)
     else:
         print(f"Unknown provider: {provider}")
         return None

@@ -551,15 +551,17 @@ def extract_youtube_video_id_filter(url):
 
 @app.context_processor
 def inject_categories():
-    """Make categories, recent posts, static version, and current date available to all templates"""
+    """Make categories, recent posts, static version, current date, and TinyMCE API key available to all templates"""
     import time
     categories = Category.query.all()
     recent_posts = Post.query.order_by(Post.published_date.desc()).limit(5).all()
+    tinymce_api_key = os.environ.get('TINYMCE_API_KEY', 'no-api-key')
     return dict(
         categories=categories, 
         recent_posts=recent_posts,
         static_version=int(time.time()),
-        current_date=datetime.now().strftime('%B %d, %Y')
+        current_date=datetime.now().strftime('%B %d, %Y'),
+        tinymce_api_key=tinymce_api_key
     )
 
 

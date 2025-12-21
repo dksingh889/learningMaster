@@ -240,6 +240,13 @@
         </div>
         
         <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Custom Instructions / Additional Prompt (Optional)</label>
+            <textarea id="ai-regenerate-custom-prompt" rows="4" placeholder="Add any specific instructions, requirements, or context for the AI. For example:&#10;- Focus on beginners&#10;- Include real-world examples&#10;- Emphasize performance optimization&#10;- Add troubleshooting section" 
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; font-family: inherit; resize: vertical;"></textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">These instructions will be combined with our system prompts to guide the AI generation</small>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">AI Provider</label>
             <select id="ai-regenerate-provider" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
                 <option value="openai">OpenAI (GPT-4o) - Best Quality</option>
@@ -264,10 +271,12 @@ function showAIRegenerate() {
 function closeAIRegenerate() {
     document.getElementById('ai-regenerate-modal').style.display = 'none';
     document.getElementById('ai-regenerate-status').style.display = 'none';
+    document.getElementById('ai-regenerate-custom-prompt').value = '';
 }
 
 async function regenerateAIPost() {
     const provider = document.getElementById('ai-regenerate-provider').value;
+    const customPrompt = document.getElementById('ai-regenerate-custom-prompt').value.trim();
     const statusDiv = document.getElementById('ai-regenerate-status');
     const postId = {{ post.id }};
     
@@ -280,7 +289,7 @@ async function regenerateAIPost() {
         const response = await fetch('/admin/seo/api/regenerate-post', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({post_id: postId, provider})
+            body: JSON.stringify({post_id: postId, custom_prompt: customPrompt, provider})
         });
         
         const data = await response.json();

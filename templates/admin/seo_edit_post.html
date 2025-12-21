@@ -59,14 +59,30 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="content">Main Content * (HTML supported)</label>
-                    <textarea id="content" name="content" rows="15" required oninput="updateSuggestions();">{{ form_data.content if form_data else '' }}</textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label for="content" style="margin: 0;">Main Content * (Rich Text Editor)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" id="toggle-editor-view" onclick="toggleEditorView()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">📄 HTML View</button>
+                            <button type="button" onclick="insertImageInContent()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">🖼️ Insert Image</button>
+                            <button type="button" onclick="insertHorizontalLine()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">➖ Insert Line</button>
+                        </div>
+                    </div>
+                    <div id="editor-container" style="border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                        <textarea id="content" name="content" required>{{ form_data.content if form_data else '' }}</textarea>
+                    </div>
+                    <div id="html-editor-container" style="display: none; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <textarea id="content-html" name="content-html" rows="20" style="width: 100%; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.9rem; border: none; resize: vertical;">{{ form_data.content if form_data else '' }}</textarea>
+                    </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
                         <small style="color: #6b7280; font-size: 0.85rem;">
                             Word count: <span id="word-count">0</span> | 
                             Reading time: <span id="reading-time">0 min</span>
                         </small>
-                        <button type="button" onclick="insertHeading()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Insert H2</button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" onclick="insertHeading('h2')" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">H2</button>
+                            <button type="button" onclick="insertHeading('h3')" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">H3</button>
+                            <button type="button" onclick="insertCodeBlock()" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">💻 Code</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -316,7 +332,7 @@
             </div>
 
             <!-- SEO Checklist -->
-            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">✅ SEO Checklist</h3>
                 <div id="seo-checklist" style="font-size: 0.9rem;">
                     <div style="margin-bottom: 0.5rem;">
@@ -339,6 +355,60 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Content Quality Checklist for Human Editing -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: white;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: white;">✏️ Human Editing Checklist</h3>
+                <p style="font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.9;">Review AI-generated content before publishing:</p>
+                <div id="editing-checklist" style="font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-readability" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-readability" style="margin: 0; cursor: pointer;">Readability checked - flows naturally</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-personality" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-personality" style="margin: 0; cursor: pointer;">Added personal touch/examples</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-facts" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-facts" style="margin: 0; cursor: pointer;">Fact-checked technical info</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-examples" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-examples" style="margin: 0; cursor: pointer;">Added real code examples</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-unique" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-unique" style="margin: 0; cursor: pointer;">Added unique insights/value</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-grammar" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-grammar" style="margin: 0; cursor: pointer;">Grammar & spelling checked</label>
+                    </div>
+                    <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+                        <input type="checkbox" id="edit-adsense" onchange="updateEditingProgress()" style="margin-top: 0.2rem;">
+                        <label for="edit-adsense" style="margin: 0; cursor: pointer;">AdSense-ready (human-like)</label>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                        <span>Editing Progress:</span>
+                        <strong id="editing-progress">0/7</strong>
+                    </div>
+                    <div style="margin-top: 0.5rem; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden;">
+                        <div id="editing-progress-bar" style="height: 100%; background: white; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Quality Suggestions -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">💡 Editing Suggestions</h3>
+                <div id="editing-suggestions" style="font-size: 0.85rem; color: #6b7280;">
+                    <p style="margin: 0;">Click "Analyze Content" to get suggestions for improving readability and human-like quality.</p>
+                </div>
+                <button type="button" onclick="analyzeContentQuality()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem; padding: 0.75rem; font-size: 0.9rem;">🔍 Analyze Content Quality</button>
+            </div>
         </div>
     </form>
 </div>
@@ -352,7 +422,200 @@
     </div>
 </div>
 
+<!-- TinyMCE Rich Text Editor -->
+<script src="https://cdn.tiny.cloud/1/{{ tinymce_api_key }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
 <script>
+let editorInstance = null;
+let isHtmlView = false;
+
+// Initialize TinyMCE
+document.addEventListener('DOMContentLoaded', function() {
+    tinymce.init({
+        selector: '#content',
+        height: 600,
+        menubar: true,
+        plugins: [
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+            'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | formatselect | ' +
+            'bold italic backcolor | alignleft aligncenter ' +
+            'alignright alignjustify | bullist numlist outdent indent | ' +
+            'removeformat | link image code | help',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
+        branding: false,
+        promotion: false,
+        setup: function(editor) {
+            editorInstance = editor;
+            
+            // Update word count and suggestions on content change
+            editor.on('input keyup', function() {
+                updateEditorStats();
+                updateSuggestions();
+            });
+        },
+        images_upload_handler: async function(blobInfo, progress) {
+            return new Promise(function(resolve, reject) {
+                const formData = new FormData();
+                formData.append('file', blobInfo.blob(), blobInfo.filename());
+                
+                fetch('/admin/seo/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.url) {
+                        resolve(data.url);
+                    } else {
+                        reject(data.error || 'Upload failed');
+                    }
+                })
+                .catch(error => {
+                    reject('Upload error: ' + error.message);
+                });
+            });
+        },
+        automatic_uploads: true,
+        file_picker_types: 'image',
+        paste_data_images: true
+    });
+    
+    // Initialize word count
+    setTimeout(() => updateEditorStats(), 1000);
+});
+
+function updateEditorStats() {
+    if (editorInstance) {
+        const content = editorInstance.getContent({ format: 'text' });
+        const wordCount = content.trim().split(/\s+/).filter(word => word.length > 0).length;
+        const readingTime = Math.ceil(wordCount / 200);
+        
+        document.getElementById('word-count').textContent = wordCount;
+        document.getElementById('reading-time').textContent = readingTime;
+    }
+}
+
+function toggleEditorView() {
+    const editorContainer = document.getElementById('editor-container');
+    const htmlContainer = document.getElementById('html-editor-container');
+    const toggleBtn = document.getElementById('toggle-editor-view');
+    
+    if (!isHtmlView) {
+        // Switch to HTML view
+        if (editorInstance) {
+            const htmlContent = editorInstance.getContent();
+            document.getElementById('content-html').value = htmlContent;
+        }
+        editorContainer.style.display = 'none';
+        htmlContainer.style.display = 'block';
+        toggleBtn.textContent = '📝 Rich Text View';
+        isHtmlView = true;
+    } else {
+        // Switch back to rich text view
+        const htmlContent = document.getElementById('content-html').value;
+        if (editorInstance) {
+            editorInstance.setContent(htmlContent);
+        }
+        editorContainer.style.display = 'block';
+        htmlContainer.style.display = 'none';
+        toggleBtn.textContent = '📄 HTML View';
+        isHtmlView = false;
+        updateEditorStats();
+        updateSuggestions();
+    }
+}
+
+function insertImageInContent() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/admin/seo/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.url) {
+                if (editorInstance && !isHtmlView) {
+                    editorInstance.execCommand('mceInsertContent', false, `<img src="${data.url}" alt="Image" style="max-width: 100%; height: auto; margin: 1rem 0;" />`);
+                } else {
+                    const htmlEditor = document.getElementById('content-html');
+                    const cursorPos = htmlEditor.selectionStart;
+                    const textBefore = htmlEditor.value.substring(0, cursorPos);
+                    const textAfter = htmlEditor.value.substring(cursorPos);
+                    htmlEditor.value = textBefore + `<img src="${data.url}" alt="Image" style="max-width: 100%; height: auto; margin: 1rem 0;" />` + textAfter;
+                }
+                updateEditorStats();
+            } else {
+                alert('Failed to upload image: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Upload error: ' + error.message);
+        });
+    };
+    input.click();
+}
+
+function insertHorizontalLine() {
+    if (editorInstance && !isHtmlView) {
+        editorInstance.execCommand('mceInsertContent', false, '<hr style="margin: 2rem 0; border: none; border-top: 2px solid #e5e7eb;" />');
+    } else {
+        const htmlEditor = document.getElementById('content-html');
+        const cursorPos = htmlEditor.selectionStart;
+        const textBefore = htmlEditor.value.substring(0, cursorPos);
+        const textAfter = htmlEditor.value.substring(cursorPos);
+        htmlEditor.value = textBefore + '<hr style="margin: 2rem 0; border: none; border-top: 2px solid #e5e7eb;" />' + textAfter;
+    }
+    updateEditorStats();
+}
+
+function insertHeading(level) {
+    const headingText = prompt(`Enter ${level.toUpperCase()} heading text:`, '');
+    if (!headingText) return;
+    
+    if (editorInstance && !isHtmlView) {
+        editorInstance.execCommand('mceInsertContent', false, `<${level}>${headingText}</${level}>`);
+    } else {
+        const htmlEditor = document.getElementById('content-html');
+        const cursorPos = htmlEditor.selectionStart;
+        const textBefore = htmlEditor.value.substring(0, cursorPos);
+        const textAfter = htmlEditor.value.substring(cursorPos);
+        htmlEditor.value = textBefore + `<${level}>${headingText}</${level}>` + textAfter;
+    }
+    updateEditorStats();
+    updateSuggestions();
+}
+
+function insertCodeBlock() {
+    const code = prompt('Enter code:', '');
+    if (!code) return;
+    
+    const language = prompt('Enter language (python, javascript, bash, etc.) or leave empty:', '');
+    const langClass = language ? ` class="language-${language}"` : '';
+    
+    if (editorInstance && !isHtmlView) {
+        editorInstance.execCommand('mceInsertContent', false, `<pre><code${langClass}>${code}</code></pre>`);
+    } else {
+        const htmlEditor = document.getElementById('content-html');
+        const cursorPos = htmlEditor.selectionStart;
+        const textBefore = htmlEditor.value.substring(0, cursorPos);
+        const textAfter = htmlEditor.value.substring(cursorPos);
+        htmlEditor.value = textBefore + `<pre><code${langClass}>${code}</code></pre>` + textAfter;
+    }
+    updateEditorStats();
+}
+
 // Auto-update functions
 function updateSlug() {
     const title = document.getElementById('title').value;
@@ -383,8 +646,23 @@ function updateMetaLength(fieldId, maxLength) {
 }
 
 function updateSuggestions() {
+    let content = '';
+    let htmlContent = '';
+    
+    if (editorInstance && !isHtmlView) {
+        htmlContent = editorInstance.getContent();
+        content = editorInstance.getContent({ format: 'text' });
+        document.getElementById('content').value = htmlContent;
+    } else if (isHtmlView) {
+        htmlContent = document.getElementById('content-html').value;
+        content = htmlContent.replace(/<[^>]*>/g, ' ');
+        document.getElementById('content').value = htmlContent;
+    } else {
+        content = document.getElementById('content').value;
+        htmlContent = content;
+    }
+    
     const title = document.getElementById('title').value;
-    const content = document.getElementById('content').value;
     const keyword = document.getElementById('primary_keyword').value;
     
     if (!title && !content) return;
@@ -442,7 +720,17 @@ function updateChecklist(data) {
     const title = document.getElementById('title').value;
     const metaDesc = document.getElementById('meta_description').value;
     const keyword = document.getElementById('primary_keyword').value;
-    const content = document.getElementById('content').value;
+    
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent({ format: 'text' });
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value.replace(/<[^>]*>/g, ' ');
+    } else {
+        content = document.getElementById('content').value;
+    }
+    
     const image = document.getElementById('featured_image').value;
     
     document.getElementById('check-title').checked = title.length >= 30 && title.length <= 60;
@@ -456,7 +744,17 @@ function updateChecklist(data) {
 // Auto-generate all SEO fields at once
 async function generateAllSEO() {
     const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
+    
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent({ format: 'text' });
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value.replace(/<[^>]*>/g, ' ');
+    } else {
+        content = document.getElementById('content').value.trim();
+    }
+    
     const existingKeyword = document.getElementById('primary_keyword').value.trim();
     
     if (!title) {
@@ -508,7 +806,16 @@ async function generateAllSEO() {
 // Individual auto-generate functions
 async function autoGenerateKeyword() {
     const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
+    
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent({ format: 'text' });
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value.replace(/<[^>]*>/g, ' ');
+    } else {
+        content = document.getElementById('content').value.trim();
+    }
     
     if (!title) {
         alert('Please enter a title first');
@@ -534,7 +841,17 @@ async function autoGenerateKeyword() {
 
 async function autoGenerateSecondaryKeywords() {
     const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
+    
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent({ format: 'text' });
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value.replace(/<[^>]*>/g, ' ');
+    } else {
+        content = document.getElementById('content').value.trim();
+    }
+    
     const keyword = document.getElementById('primary_keyword').value.trim();
     
     if (!keyword) {
@@ -585,7 +902,16 @@ async function autoGenerateMetaTitle() {
 }
 
 async function autoGenerateMetaDescription() {
-    const content = document.getElementById('content').value.trim();
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent({ format: 'text' });
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value.replace(/<[^>]*>/g, ' ');
+    } else {
+        content = document.getElementById('content').value.trim();
+    }
+    
     const keyword = document.getElementById('primary_keyword').value.trim();
     
     if (!content) {
@@ -695,17 +1021,9 @@ function suggestMetaDescription() {
     autoGenerateMetaDescription();
 }
 
+// Legacy insertHeading - now uses the new insertHeading function
 function insertHeading() {
-    const content = document.getElementById('content');
-    const keyword = document.getElementById('primary_keyword').value || 'Topic';
-    const heading = `<h2>${keyword} Guide</h2>\n\n`;
-    const cursorPos = content.selectionStart;
-    const textBefore = content.value.substring(0, cursorPos);
-    const textAfter = content.value.substring(cursorPos);
-    content.value = textBefore + heading + textAfter;
-    content.focus();
-    content.setSelectionRange(cursorPos + heading.length, cursorPos + heading.length);
-    updateSuggestions();
+    insertHeading('h2');
 }
 
 function uploadImage(fieldId) {
@@ -737,6 +1055,13 @@ function uploadImage(fieldId) {
 }
 
 function previewPost() {
+    // Sync editor content before preview
+    if (editorInstance && !isHtmlView) {
+        document.getElementById('content').value = editorInstance.getContent();
+    } else if (isHtmlView) {
+        document.getElementById('content').value = document.getElementById('content-html').value;
+    }
+    
     const form = document.getElementById('post-form');
     const formData = new FormData(form);
     const data = {};
@@ -781,15 +1106,115 @@ function saveDraft() {
     alert('Draft saving coming soon!');
 }
 
+// Editing checklist functions
+function updateEditingProgress() {
+    const checkboxes = [
+        'edit-readability', 'edit-personality', 'edit-facts', 
+        'edit-examples', 'edit-unique', 'edit-grammar', 'edit-adsense'
+    ];
+    let checked = 0;
+    checkboxes.forEach(id => {
+        if (document.getElementById(id)?.checked) checked++;
+    });
+    
+    const progress = document.getElementById('editing-progress');
+    const progressBar = document.getElementById('editing-progress-bar');
+    
+    if (progress) progress.textContent = `${checked}/7`;
+    if (progressBar) {
+        const percentage = (checked / 7) * 100;
+        progressBar.style.width = percentage + '%';
+    }
+}
+
+// Content quality analysis
+async function analyzeContentQuality() {
+    // Get content from editor
+    let content = '';
+    if (editorInstance && !isHtmlView) {
+        content = editorInstance.getContent();
+    } else if (isHtmlView) {
+        content = document.getElementById('content-html').value;
+    } else {
+        content = document.getElementById('content').value.trim();
+    }
+    
+    const title = document.getElementById('title').value.trim();
+    
+    if (!content) {
+        alert('Please add content first');
+        return;
+    }
+    
+    const suggestionsDiv = document.getElementById('editing-suggestions');
+    suggestionsDiv.innerHTML = '<p style="color: #3b82f6;">🔍 Analyzing content quality...</p>';
+    
+    try {
+        const response = await fetch('/admin/seo/api/analyze-content-quality', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content, title})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.suggestions) {
+            let html = '<div style="line-height: 1.6;">';
+            
+            if (result.suggestions.length === 0) {
+                html += '<p style="color: #10b981; font-weight: 600;">✅ Content looks great! Ready for publishing.</p>';
+            } else {
+                html += '<p style="color: #f59e0b; font-weight: 600; margin-bottom: 0.75rem;">💡 Suggestions for improvement:</p>';
+                html += '<ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">';
+                result.suggestions.forEach(suggestion => {
+                    html += `<li style="margin-bottom: 0.5rem; color: #374151;">${suggestion}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            if (result.metrics) {
+                html += '<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">';
+                html += '<p style="font-weight: 600; margin-bottom: 0.5rem;">Content Metrics:</p>';
+                html += `<p style="font-size: 0.85rem; margin: 0.25rem 0;">• Readability Score: <strong>${result.metrics.readability || 'N/A'}</strong></p>`;
+                html += `<p style="font-size: 0.85rem; margin: 0.25rem 0;">• Sentence Variety: <strong>${result.metrics.sentence_variety || 'N/A'}</strong></p>`;
+                html += `<p style="font-size: 0.85rem; margin: 0.25rem 0;">• Human-like Score: <strong>${result.metrics.human_score || 'N/A'}/10</strong></p>`;
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            suggestionsDiv.innerHTML = html;
+        } else {
+            suggestionsDiv.innerHTML = '<p style="color: #ef4444;">❌ Failed to analyze content. Please try again.</p>';
+        }
+    } catch (error) {
+        suggestionsDiv.innerHTML = `<p style="color: #ef4444;">❌ Error: ${error.message}</p>`;
+    }
+}
+
 // Initialize
+// Form submission handler - sync editor content
+document.getElementById('post-form')?.addEventListener('submit', function(e) {
+    // Sync editor content to textarea before form submission
+    if (editorInstance && !isHtmlView) {
+        document.getElementById('content').value = editorInstance.getContent();
+    } else if (isHtmlView) {
+        document.getElementById('content').value = document.getElementById('content-html').value;
+    }
+});
+
+// Additional initialization after TinyMCE loads
 document.addEventListener('DOMContentLoaded', function() {
     updateMetaLength('title', 60);
     updateMetaLength('meta_title', 60);
     updateMetaLength('meta_description', 155);
-    updateSuggestions();
+    
+    // Wait for TinyMCE to initialize before updating suggestions
+    setTimeout(() => {
+        updateSuggestions();
+    }, 1000);
     
     // Allow manual slug editing
-    document.getElementById('slug').addEventListener('input', function() {
+    document.getElementById('slug')?.addEventListener('input', function() {
         this.dataset.autoGenerated = 'false';
     });
     
@@ -826,8 +1251,13 @@ function fillFormWithAIData(data) {
     if (data.secondary_keywords && document.getElementById('secondary_keywords')) {
         document.getElementById('secondary_keywords').value = data.secondary_keywords;
     }
-    if (data.content && document.getElementById('content')) {
-        document.getElementById('content').value = data.content;
+    if (data.content) {
+        if (editorInstance) {
+            editorInstance.setContent(data.content);
+            document.getElementById('content').value = data.content;
+        } else {
+            document.getElementById('content').value = data.content;
+        }
     }
     if (data.excerpt && document.getElementById('excerpt')) {
         document.getElementById('excerpt').value = data.excerpt;
@@ -877,10 +1307,12 @@ function showAIRegenerate() {
 function closeAIRegenerate() {
     document.getElementById('ai-regenerate-modal').style.display = 'none';
     document.getElementById('ai-regenerate-status').style.display = 'none';
+    document.getElementById('ai-regenerate-custom-prompt').value = '';
 }
 
 async function regenerateAIPost() {
     const provider = document.getElementById('ai-regenerate-provider').value;
+    const customPrompt = document.getElementById('ai-regenerate-custom-prompt').value.trim();
     const statusDiv = document.getElementById('ai-regenerate-status');
     const postId = {{ post.id }};
     
@@ -893,7 +1325,7 @@ async function regenerateAIPost() {
         const response = await fetch('/admin/seo/api/regenerate-post', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({post_id: postId, provider})
+            body: JSON.stringify({post_id: postId, custom_prompt: customPrompt, provider})
         });
         
         const data = await response.json();
@@ -934,6 +1366,13 @@ async function regenerateAIPost() {
         
         <div style="margin-bottom: 1rem;">
             <p style="color: #6b7280; margin-bottom: 1rem;">This will regenerate the content for "{{ post.title }}" using AI. The new content will replace the existing content in the form.</p>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Custom Instructions / Additional Prompt (Optional)</label>
+            <textarea id="ai-regenerate-custom-prompt" rows="4" placeholder="Add any specific instructions, requirements, or context for the AI. For example:&#10;- Focus on beginners&#10;- Include real-world examples&#10;- Emphasize performance optimization&#10;- Add troubleshooting section" 
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; font-family: inherit; resize: vertical;"></textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">These instructions will be combined with our system prompts to guide the AI generation</small>
         </div>
         
         <div style="margin-bottom: 1rem;">
