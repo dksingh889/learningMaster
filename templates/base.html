@@ -16,21 +16,7 @@
     <!-- Google tag (gtag.js) - Excludes /admin routes -->
     <script>
     // Only load Google Analytics if not on admin pages
-    if (window.location.pathname.indexOf('/admin') !== 0) {
-        (function() {
-            var script = document.createElement('script');
-            script.async = true;
-            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-TXH8FKDGMT';
-            document.head.appendChild(script);
-            
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-TXH8FKDGMT', {
-                'page_path': window.location.pathname + window.location.search
-            });
-        })();
-    }
+        
     </script>
     
     <!-- Open Graph / Facebook -->
