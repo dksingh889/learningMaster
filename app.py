@@ -554,7 +554,7 @@ def inject_categories():
     """Make categories, recent posts, static version, current date, and TinyMCE API key available to all templates"""
     import time
     categories = Category.query.all()
-    recent_posts = Post.query.order_by(Post.published_date.desc()).limit(5).all()
+    recent_posts = Post.query.order_by(Post.published_date.desc()).limit(3).all()
     tinymce_api_key = os.environ.get('TINYMCE_API_KEY', 'no-api-key')
     return dict(
         categories=categories, 

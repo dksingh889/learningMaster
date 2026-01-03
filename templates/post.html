@@ -205,7 +205,7 @@
                 <div class="sidebar-widget">
                     <h3 class="widget-title">Recent Posts</h3>
                     <ul class="widget-list">
-                        {% for recent_post in recent_posts[:5] %}
+                        {% for recent_post in recent_posts[:3] %}
                         {% if recent_post.id != post.id %}
                         <li>
                             <a href="{{ url_for('post_detail', slug=recent_post.slug) }}" class="widget-link">
